@@ -1,0 +1,25 @@
+[Unit]
+Description=SunoApp Flask API
+After=network.target mysql.service
+
+[Service]
+Type=notify
+User=root
+Group=www-data
+WorkingDirectory=/var/www/sunoapp/backend
+Environment="PATH=/var/www/sunoapp/venv/bin"
+ExecStart=/var/www/sunoapp/venv/bin/gunicorn \
+    --config /var/www/sunoapp/deploy/gunicorn_config.py \
+    --workers 4 \
+    --bind 127.0.0.1:5000 \
+    run:app
+
+Restart=always
+RestartSec=10
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

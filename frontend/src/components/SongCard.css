@@ -1,0 +1,163 @@
+.song-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.song-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.song-card-header {
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.song-icon {
+  font-size: 1.5rem;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.status-badge.status-create {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.status-badge.status-submitted {
+  background-color: rgba(255, 193, 7, 0.9);
+  color: #333;
+}
+
+.status-badge.status-completed {
+  background-color: rgba(76, 175, 80, 0.9);
+  color: white;
+}
+
+.status-badge.status-unspecified {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.song-card-body {
+  padding: 1.25rem;
+}
+
+.song-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: #333;
+}
+
+.song-lyrics {
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  min-height: 3rem;
+}
+
+.song-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.meta-item {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.meta-label {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.meta-value {
+  color: #666;
+}
+
+.song-downloads {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.download-link {
+  padding: 0.4rem 0.8rem;
+  background-color: #667eea;
+  color: white;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.download-link:hover {
+  background-color: #5568d3;
+}
+
+.song-card-footer {
+  padding: 1rem 1.25rem;
+  background-color: #f9f9f9;
+  display: flex;
+  gap: 0.75rem;
+  border-top: 1px solid #eee;
+}
+
+.btn-edit,
+.btn-delete,
+.btn-recreate {
+  flex: 1;
+  padding: 0.6rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-edit {
+  background-color: #667eea;
+  color: white;
+}
+
+.btn-edit:hover {
+  background-color: #5568d3;
+}
+
+.btn-recreate {
+  background-color: #f0ad4e;
+  color: white;
+}
+
+.btn-recreate:hover {
+  background-color: #ec971f;
+}
+
+.btn-delete {
+  background-color: #f5f5f5;
+  color: #d9534f;
+  border: 1px solid #d9534f;
+}
+
+.btn-delete:hover {
+  background-color: #d9534f;
+  color: white;
+}
