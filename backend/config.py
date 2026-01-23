@@ -1,5 +1,6 @@
 import os
 from datetime import timedelta
+from urllib.parse import quote_plus
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -19,7 +20,8 @@ class Config:
     DB_USER = os.getenv('DB_USER', 'music_user')
     DB_PASSWORD = os.getenv('DB_PASSWORD', '')
 
-    SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    # URL-encode password to handle special characters like @ and !
+    SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USER}:{quote_plus(DB_PASSWORD)}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_size': 10,
