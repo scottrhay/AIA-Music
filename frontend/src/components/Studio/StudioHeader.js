@@ -24,7 +24,7 @@ function StudioHeader({ stats, onAddSong, onManageStyles, onLogout }) {
         {/* Left: Brand and stats */}
         <div className="studio-header__left">
           <h1 className="studio-header__title">
-            Hay Voice Labs
+            AIA Speech Studio
           </h1>
 
           <div className="studio-header__stats">

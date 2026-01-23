@@ -7,17 +7,15 @@ services:
       dockerfile: Dockerfile
     container_name: aiaspeech
     restart: unless-stopped
-    ports:
-      - "5000:5000"
     environment:
       # Flask Configuration
       - FLASK_APP=run.py
       - FLASK_ENV=production
       - SECRET_KEY=${SECRET_KEY}
 
-      # Database Configuration (connects to host MySQL)
-      - DB_HOST=host.docker.internal
-      - DB_PORT=3306
+      # Database Configuration (PostgreSQL)
+      - DB_HOST=postgres
+      - DB_PORT=5432
       - DB_NAME=${DB_NAME:-aiaspeech_db}
       - DB_USER=${DB_USER:-aiaspeech_user}
       - DB_PASSWORD=${DB_PASSWORD}
@@ -32,16 +30,28 @@ services:
       # API Settings
       - API_PREFIX=/api/v1
 
+      # Azure Speech Configuration
+      - AZURE_SPEECH_KEY=${AZURE_SPEECH_KEY}
+      - AZURE_SPEECH_REGION=${AZURE_SPEECH_REGION}
+      - AZURE_SPEECH_ENDPOINT=${AZURE_SPEECH_ENDPOINT}
+      - AZURE_TTS_ENDPOINT=${AZURE_TTS_ENDPOINT}
+      - AZURE_STT_ENDPOINT=${AZURE_STT_ENDPOINT}
+
+      # Microsoft OAuth
+      - MICROSOFT_CLIENT_ID=${MICROSOFT_CLIENT_ID}
+      - MICROSOFT_CLIENT_SECRET=${MICROSOFT_CLIENT_SECRET}
+      - MICROSOFT_TENANT_ID=${MICROSOFT_TENANT_ID:-consumers}
+      - MICROSOFT_REDIRECT_URI=https://speech.aiacopilot.com/api/v1/auth/microsoft/callback
+      - FRONTEND_URL=https://speech.aiacopilot.com
+
+      # App URL
+      - APP_URL=https://speech.aiacopilot.com
+
     volumes:
-      # Mount logs directory for persistence
       - ./logs:/app/logs
 
     networks:
-      - aiaspeech-network
-
-    # Connect to host MySQL
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - root_default
 
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
@@ -50,7 +60,6 @@ services:
       retries: 3
       start_period: 40s
 
-    # Resource limits (adjust based on your needs)
     deploy:
       resources:
         limits:
@@ -65,29 +74,31 @@ services:
     image: nginx:alpine
     container_name: aiaspeech-nginx
     restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
     volumes:
       - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./deploy/nginx/conf.d:/etc/nginx/conf.d:ro
       - ./frontend/build:/usr/share/nginx/html:ro
       - ./logs/nginx:/var/log/nginx
-      # SSL certificates from Let's Encrypt on host
-      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - aiaspeech
     networks:
-      - aiaspeech-network
+      - root_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=root_default"
+      - "traefik.http.routers.aiaspeech.rule=Host(`speech.aiacopilot.com`)"
+      - "traefik.http.routers.aiaspeech.entrypoints=web,websecure"
+      - "traefik.http.routers.aiaspeech.tls=true"
+      - "traefik.http.routers.aiaspeech.tls.certresolver=mytlschallenge"
+      - "traefik.http.services.aiaspeech.loadbalancer.server.port=80"
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/health"]
       interval: 30s
       timeout: 10s
       retries: 3
 
 networks:
-  aiaspeech-network:
-    driver: bridge
+  root_default:
+    external: true
 
-# Note: MySQL is NOT in this compose file - it uses your existing MySQL on the host
-# n8n is also NOT in this compose file - it uses your existing n8n instance
+# Note: PostgreSQL and Traefik are shared containers on the VPS

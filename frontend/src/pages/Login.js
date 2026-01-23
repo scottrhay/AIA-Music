@@ -79,7 +79,7 @@ function Login({ onLogin }) {
   return (
     <div className="login-container">
       <div className="login-box">
-        <h1>Hay Voice Labs</h1>
+        <h1>AIA Speech Studio</h1>
         <p className="login-subtitle">Speech Creation Platform</p>
 
         {error && <div className="alert alert-error">{error}</div>}

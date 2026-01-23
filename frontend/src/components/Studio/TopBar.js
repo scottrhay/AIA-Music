@@ -40,7 +40,7 @@ function TopBar({ onAddSong, onManageStyles, onLogout, primaryButtonText = "+ Ne
     <header className="top-bar">
       <div className="top-bar__container">
         <div className="top-bar__left">
-          <h1 className="top-bar__title">Hay Voice Labs</h1>
+          <h1 className="top-bar__title">AIA Speech Studio</h1>
         </div>
 
         <div className="top-bar__actions">

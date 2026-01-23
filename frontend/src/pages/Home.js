@@ -143,7 +143,7 @@ function Home({ onLogout }) {
   return (
     <div className="app-container">
       <header className="header">
-        <h1>Hay Voice Labs</h1>
+        <h1>AIA Speech Studio</h1>
         <div className="header-nav">
           <button className="nav-button primary" onClick={handleAddSong}>
             + New Clip
