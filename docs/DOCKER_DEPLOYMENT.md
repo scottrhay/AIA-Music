@@ -1,6 +1,6 @@
-# SunoApp Docker Deployment Guide
+# AIASpeech Docker Deployment Guide
 
-Deploy SunoApp using Docker containers for a clean, isolated environment.
+Deploy AIASpeech using Docker containers for a clean, isolated environment.
 
 ## Why Docker?
 
@@ -15,11 +15,11 @@ Deploy SunoApp using Docker containers for a clean, isolated environment.
 
 ```
 ┌─────────────────────────────────────────────┐
-│  Browser → https://suno.aiacopilot.com     │
+│  Browser → https://speech.aiacopilot.com     │
 │                    ↓                         │
 │         [Nginx Container] (port 80/443)     │
 │                    ↓                         │
-│         [SunoApp Container] (port 5000)     │
+│         [AIASpeech Container] (port 5000)     │
 │                    ↓                         │
 │         [Host MySQL] (existing)             │
 │                    ↕                         │
@@ -28,7 +28,7 @@ Deploy SunoApp using Docker containers for a clean, isolated environment.
 ```
 
 **What's in containers:**
-- SunoApp Flask backend + React frontend
+- AIASpeech Flask backend + React frontend
 - Nginx web server
 
 **What's on the host (not containerized):**
@@ -42,7 +42,7 @@ This hybrid approach keeps your VPS clean while leveraging existing infrastructu
 - Docker installed on VPS
 - Docker Compose installed
 - MySQL running on host
-- Domain configured (suno.aiacopilot.com)
+- Domain configured (speech.aiacopilot.com)
 
 ## Quick Start (30 minutes)
 
@@ -69,7 +69,7 @@ docker compose version
 ```bash
 # From your local machine
 rsync -avz --exclude 'node_modules' --exclude 'venv' --exclude '.git' \
-  SunoApp/ root@srv800338.hstgr.cloud:/var/www/sunoapp/
+  AIASpeech/ root@srv800338.hstgr.cloud:/var/www/aiaspeech/
 ```
 
 ### 3. Set Up Database
@@ -79,7 +79,7 @@ rsync -avz --exclude 'node_modules' --exclude 'venv' --exclude '.git' \
 ssh root@srv800338.hstgr.cloud
 
 # Navigate to app directory
-cd /var/www/sunoapp/deploy
+cd /var/www/aiaspeech/deploy
 
 # Make scripts executable
 chmod +x *.sh
@@ -94,7 +94,7 @@ chmod +x *.sh
 
 ```bash
 # Go to app root
-cd /var/www/sunoapp
+cd /var/www/aiaspeech
 
 # Create .env file from template
 cp .env.docker.example .env
@@ -118,7 +118,7 @@ DB_PASSWORD=paste-password-from-database-setup
 ### 5. Deploy with Docker
 
 ```bash
-cd /var/www/sunoapp/deploy
+cd /var/www/aiaspeech/deploy
 ./docker-deploy.sh
 ```
 
@@ -141,14 +141,14 @@ docker-compose logs -f
 curl http://localhost:5000/health
 ```
 
-Visit: https://suno.aiacopilot.com
+Visit: https://speech.aiacopilot.com
 
 ## Using the Makefile (Convenience Commands)
 
 I've included a Makefile for easier management:
 
 ```bash
-cd /var/www/sunoapp
+cd /var/www/aiaspeech
 
 # View all available commands
 make help
@@ -187,7 +187,7 @@ make logs-app
 make logs-nginx
 
 # Or using docker-compose directly
-docker-compose logs -f sunoapp
+docker-compose logs -f aiaspeech
 ```
 
 ### Restart Application
@@ -206,11 +206,11 @@ When you have code changes:
 
 ```bash
 # Upload new code
-rsync -avz SunoApp/ root@srv800338.hstgr.cloud:/var/www/sunoapp/
+rsync -avz AIASpeech/ root@srv800338.hstgr.cloud:/var/www/aiaspeech/
 
 # SSH into VPS
 ssh root@srv800338.hstgr.cloud
-cd /var/www/sunoapp
+cd /var/www/aiaspeech
 
 # Rebuild and restart
 make rebuild
@@ -227,7 +227,7 @@ docker-compose up -d
 make shell
 
 # Or
-docker-compose exec sunoapp sh
+docker-compose exec aiaspeech sh
 
 # Inside container, you can:
 python  # Open Python shell
@@ -247,26 +247,26 @@ make clean
 
 ## Complete Removal
 
-To completely remove SunoApp and clean up your VPS:
+To completely remove AIASpeech and clean up your VPS:
 
 ```bash
-cd /var/www/sunoapp
+cd /var/www/aiaspeech
 
 # Stop and remove containers
 docker-compose down -v
 
 # Remove images
-docker rmi sunoapp-sunoapp sunoapp-nginx
+docker rmi aiaspeech-aiaspeech aiaspeech-nginx
 
 # Remove directory
 cd /var/www
-rm -rf sunoapp
+rm -rf aiaspeech
 
 # Optionally remove database (if you want to start fresh)
 mysql -u root -p
-DROP DATABASE sunoapp_db;
-DROP USER 'sunoapp_user'@'localhost';
-DROP USER 'sunoapp_user'@'%';
+DROP DATABASE aiaspeech_db;
+DROP USER 'aiaspeech_user'@'localhost';
+DROP USER 'aiaspeech_user'@'%';
 exit;
 ```
 
@@ -299,7 +299,7 @@ docker stats
 docker-compose stop nginx
 
 # Get certificate (on host)
-sudo certbot certonly --standalone -d suno.aiacopilot.com
+sudo certbot certonly --standalone -d speech.aiacopilot.com
 
 # Start nginx
 docker-compose start nginx
@@ -328,7 +328,7 @@ extra_hosts:
 
 - **80** → Nginx (HTTP, redirects to HTTPS)
 - **443** → Nginx (HTTPS)
-- **5000** → SunoApp (internal, accessed via Nginx)
+- **5000** → AIASpeech (internal, accessed via Nginx)
 
 ## Troubleshooting
 
@@ -336,13 +336,13 @@ extra_hosts:
 
 ```bash
 # Check logs
-docker-compose logs sunoapp
+docker-compose logs aiaspeech
 
 # Common issues:
 # 1. Database connection failed
 #    - Check DB_PASSWORD in .env
 #    - Ensure MySQL allows connections from Docker network
-#    - Test: docker-compose exec sunoapp ping host.docker.internal
+#    - Test: docker-compose exec aiaspeech ping host.docker.internal
 
 # 2. Port already in use
 #    - Check what's using port: sudo lsof -i :80
@@ -362,7 +362,7 @@ bind-address = 0.0.0.0
 sudo systemctl restart mysql
 
 # Test connection from container
-docker-compose exec sunoapp sh
+docker-compose exec aiaspeech sh
 nc -zv host.docker.internal 3306
 ```
 
@@ -370,11 +370,11 @@ nc -zv host.docker.internal 3306
 
 ```bash
 # Check if certificate exists on host
-ls -la /etc/letsencrypt/live/suno.aiacopilot.com/
+ls -la /etc/letsencrypt/live/speech.aiacopilot.com/
 
 # If not, get certificate
 docker-compose stop nginx
-sudo certbot certonly --standalone -d suno.aiacopilot.com
+sudo certbot certonly --standalone -d speech.aiacopilot.com
 docker-compose start nginx
 ```
 
@@ -383,10 +383,10 @@ docker-compose start nginx
 ```bash
 # Check why
 docker-compose ps
-docker-compose logs sunoapp
+docker-compose logs aiaspeech
 
 # Check health
-docker inspect sunoapp | grep -A 10 Health
+docker inspect aiaspeech | grep -A 10 Health
 ```
 
 ## Monitoring
@@ -397,7 +397,7 @@ Built-in health checks run automatically:
 
 ```bash
 # View health status
-docker inspect sunoapp | grep -A 10 Health
+docker inspect aiaspeech | grep -A 10 Health
 
 # Manual health check
 curl http://localhost:5000/health
@@ -405,7 +405,7 @@ curl http://localhost:5000/health
 
 ### Logs
 
-Logs are stored in `/var/www/sunoapp/logs`:
+Logs are stored in `/var/www/aiaspeech/logs`:
 
 ```bash
 # App logs
@@ -423,7 +423,7 @@ tail -f logs/nginx/error.log
 
 1. **Database:** Backup host MySQL
    ```bash
-   mysqldump -u root -p sunoapp_db > backup_$(date +%Y%m%d).sql
+   mysqldump -u root -p aiaspeech_db > backup_$(date +%Y%m%d).sql
    ```
 
 2. **Code:** Your code is in git (hopefully!)
@@ -434,10 +434,10 @@ tail -f logs/nginx/error.log
 
 ```bash
 # Restore database
-mysql -u root -p sunoapp_db < backup_20240101.sql
+mysql -u root -p aiaspeech_db < backup_20240101.sql
 
 # Redeploy containers
-cd /var/www/sunoapp
+cd /var/www/aiaspeech
 make up
 ```
 
@@ -519,6 +519,6 @@ After deployment:
 
 ---
 
-**You now have a clean, containerized SunoApp deployment!** 🎉
+**You now have a clean, containerized AIASpeech deployment!** 🎉
 
-To remove everything and start over: `make clean && cd /var/www && rm -rf sunoapp`
+To remove everything and start over: `make clean && cd /var/www && rm -rf aiaspeech`

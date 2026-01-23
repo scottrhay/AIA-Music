@@ -1,4 +1,4 @@
-# SunoApp Development Guide
+# AIASpeech Development Guide
 
 Guide for local development and testing.
 
@@ -16,7 +16,7 @@ Guide for local development and testing.
 1. **Create Python virtual environment:**
 
 ```bash
-cd SunoApp/backend
+cd AIASpeech/backend
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
@@ -32,14 +32,14 @@ pip install -r requirements.txt
 ```bash
 # Create database
 mysql -u root -p
-CREATE DATABASE sunoapp_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'sunoapp_dev'@'localhost' IDENTIFIED BY 'devpassword';
-GRANT ALL PRIVILEGES ON sunoapp_dev.* TO 'sunoapp_dev'@'localhost';
+CREATE DATABASE aiaspeech_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'aiaspeech_dev'@'localhost' IDENTIFIED BY 'devpassword';
+GRANT ALL PRIVILEGES ON aiaspeech_dev.* TO 'aiaspeech_dev'@'localhost';
 FLUSH PRIVILEGES;
 exit;
 
 # Import schema
-mysql -u root -p sunoapp_dev < ../database/schema.sql
+mysql -u root -p aiaspeech_dev < ../database/schema.sql
 ```
 
 4. **Create `.env` file:**
@@ -55,8 +55,8 @@ FLASK_ENV=development
 SECRET_KEY=dev-secret-key
 DB_HOST=localhost
 DB_PORT=3306
-DB_NAME=sunoapp_dev
-DB_USER=sunoapp_dev
+DB_NAME=aiaspeech_dev
+DB_USER=aiaspeech_dev
 DB_PASSWORD=devpassword
 JWT_SECRET_KEY=dev-jwt-secret
 JWT_ACCESS_TOKEN_EXPIRES=86400
@@ -77,7 +77,7 @@ Backend will be available at http://localhost:5000
 1. **Install dependencies:**
 
 ```bash
-cd SunoApp/frontend
+cd AIASpeech/frontend
 npm install
 ```
 
@@ -90,7 +90,7 @@ cp .env.example .env
 Edit `.env`:
 ```
 REACT_APP_API_URL=http://localhost:5000/api/v1
-REACT_APP_NAME=SunoApp
+REACT_APP_NAME=AIASpeech
 ```
 
 3. **Run React development server:**
@@ -146,7 +146,7 @@ curl -X POST http://localhost:5000/api/v1/songs \
 ## Project Structure
 
 ```
-SunoApp/
+AIASpeech/
 ├── backend/
 │   ├── app/
 │   │   ├── __init__.py          # Flask app factory
@@ -298,7 +298,7 @@ console.log('Debug:', variable);
 
 ```bash
 # Connect to database
-mysql -u sunoapp_dev -p sunoapp_dev
+mysql -u aiaspeech_dev -p aiaspeech_dev
 
 # Check tables
 SHOW TABLES;

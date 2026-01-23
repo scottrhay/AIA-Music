@@ -1,19 +1,19 @@
-# SunoApp Deployment Checklist
+# AIASpeech Deployment Checklist
 
-Use this checklist to deploy SunoApp to your Hostinger VPS.
+Use this checklist to deploy AIASpeech to your Hostinger VPS.
 
 ## Pre-Deployment
 
 - [ ] Code is ready in local directory
 - [ ] You have SSH access to VPS (srv800338.hstgr.cloud)
 - [ ] MySQL root password is available
-- [ ] Domain (suno.aiacopilot.com) DNS is configured or ready to configure
+- [ ] Domain (speech.aiacopilot.com) DNS is configured or ready to configure
 
 ## Step 1: Upload Code
 
 ```bash
 rsync -avz --exclude 'node_modules' --exclude 'venv' --exclude '.git' \
-  SunoApp/ root@srv800338.hstgr.cloud:/var/www/sunoapp/
+  AIASpeech/ root@srv800338.hstgr.cloud:/var/www/aiaspeech/
 ```
 
 - [ ] Code uploaded successfully
@@ -22,7 +22,7 @@ rsync -avz --exclude 'node_modules' --exclude 'venv' --exclude '.git' \
 ## Step 2: VPS Setup
 
 ```bash
-cd /var/www/sunoapp/deploy
+cd /var/www/aiaspeech/deploy
 chmod +x *.sh
 ./setup_vps.sh
 ```
@@ -32,7 +32,7 @@ chmod +x *.sh
 - [ ] Nginx installed
 - [ ] Certbot installed
 - [ ] Node.js 20 installed
-- [ ] App directory created at `/var/www/sunoapp`
+- [ ] App directory created at `/var/www/aiaspeech`
 
 ## Step 3: Database Setup
 
@@ -42,8 +42,8 @@ chmod +x *.sh
 
 When prompted:
 - [ ] Entered MySQL root password
-- [ ] Database `sunoapp_db` created
-- [ ] User `sunoapp_user` created
+- [ ] Database `aiaspeech_db` created
+- [ ] User `aiaspeech_user` created
 - [ ] Schema imported
 - [ ] **SAVED database password shown at end** ⚠️ IMPORTANT!
 
@@ -67,12 +67,12 @@ When prompted:
 In your domain registrar (where you manage aiacopilot.com):
 
 - [ ] Added A record:
-  - Host: `suno`
+  - Host: `speech`
   - Type: `A`
   - Value: `168.231.71.238`
   - TTL: `3600`
 - [ ] Waited 5-10 minutes for DNS propagation
-- [ ] Verified DNS: `nslookup suno.aiacopilot.com` returns correct IP
+- [ ] Verified DNS: `nslookup speech.aiacopilot.com` returns correct IP
 
 ## Step 6: Deploy Application
 
@@ -89,8 +89,8 @@ In your domain registrar (where you manage aiacopilot.com):
 
 ## Step 7: Verify Deployment
 
-- [ ] Visit https://suno.aiacopilot.com (should see login page)
-- [ ] Check health endpoint: https://suno.aiacopilot.com/health
+- [ ] Visit https://speech.aiacopilot.com (should see login page)
+- [ ] Check health endpoint: https://speech.aiacopilot.com/health
 - [ ] Login with admin/admin123
 - [ ] Change admin password immediately
 - [ ] Create test song
@@ -102,8 +102,8 @@ Follow `docs/n8n_workflow_updates.md`:
 
 - [ ] Added MySQL credentials to n8n
 - [ ] Updated "Get Songs" node to use MySQL
-- [ ] Updated "Submit to Suno" webhook to call API
-- [ ] Updated "Suno Callback" webhook to call API
+- [ ] Updated "Submit to Azure Speech" webhook to call API
+- [ ] Updated "Azure Speech Callback" webhook to call API
 - [ ] Tested with one song end-to-end
 - [ ] Verified song status changes: create → submitted → completed
 
@@ -147,7 +147,7 @@ Test each major feature:
 - [ ] Edit style works
 - [ ] View style details works
 - [ ] n8n picks up new songs
-- [ ] n8n submits to Suno successfully
+- [ ] n8n submits to Azure Speech successfully
 - [ ] Webhook updates song status
 - [ ] Download URLs appear when complete
 
@@ -156,19 +156,19 @@ Test each major feature:
 - [ ] Bookmarked log commands:
   ```bash
   # Application logs
-  sudo journalctl -u sunoapp -f
+  sudo journalctl -u aiaspeech -f
 
   # Access logs
-  tail -f /var/www/sunoapp/logs/gunicorn_access.log
+  tail -f /var/www/aiaspeech/logs/gunicorn_access.log
 
   # Error logs
-  tail -f /var/www/sunoapp/logs/gunicorn_error.log
+  tail -f /var/www/aiaspeech/logs/gunicorn_error.log
   ```
 
 - [ ] Set up database backup cron job (optional):
   ```bash
   # Add to crontab: crontab -e
-  0 2 * * * mysqldump -u sunoapp_user -p'PASSWORD' sunoapp_db > /var/backups/sunoapp_$(date +\%Y\%m\%d).sql
+  0 2 * * * mysqldump -u aiaspeech_user -p'PASSWORD' aiaspeech_db > /var/backups/aiaspeech_$(date +\%Y\%m\%d).sql
   ```
 
 ## Documentation Review
@@ -187,19 +187,19 @@ If something goes wrong:
 
 1. **Check service status:**
    ```bash
-   sudo systemctl status sunoapp
+   sudo systemctl status aiaspeech
    sudo systemctl status nginx
    sudo systemctl status mysql
    ```
 
 2. **View recent logs:**
    ```bash
-   sudo journalctl -u sunoapp -n 100
+   sudo journalctl -u aiaspeech -n 100
    ```
 
 3. **Test database connection:**
    ```bash
-   mysql -u sunoapp_user -p sunoapp_db
+   mysql -u aiaspeech_user -p aiaspeech_db
    ```
 
 4. **Test Nginx config:**
@@ -209,7 +209,7 @@ If something goes wrong:
 
 5. **Restart services:**
    ```bash
-   sudo systemctl restart sunoapp
+   sudo systemctl restart aiaspeech
    sudo systemctl restart nginx
    ```
 
@@ -217,9 +217,9 @@ If something goes wrong:
 
 ✅ Deployment is successful when:
 
-- You can access https://suno.aiacopilot.com
+- You can access https://speech.aiacopilot.com
 - You can login and create songs
-- n8n workflow submits songs to Suno
+- n8n workflow submits songs to Azure Speech
 - Completed songs show download URLs
 - All team members can access and use the app
 - No errors in application logs
@@ -255,19 +255,19 @@ ____________________
 ssh root@srv800338.hstgr.cloud
 
 # Restart app
-sudo systemctl restart sunoapp
+sudo systemctl restart aiaspeech
 
 # View logs
-sudo journalctl -u sunoapp -f
+sudo journalctl -u aiaspeech -f
 
 # Access database
-mysql -u sunoapp_user -p sunoapp_db
+mysql -u aiaspeech_user -p aiaspeech_db
 
 # Rebuild frontend
-cd /var/www/sunoapp/frontend && npm run build
+cd /var/www/aiaspeech/frontend && npm run build
 
 # Full restart
-sudo systemctl restart sunoapp && sudo systemctl restart nginx
+sudo systemctl restart aiaspeech && sudo systemctl restart nginx
 ```
 
 ---

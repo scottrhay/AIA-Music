@@ -1,0 +1,47 @@
+@import '../../theme/theme.css';
+
+.track-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: var(--spacing-5);
+  width: 100%;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .track-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-4);
+  }
+}
+
+/* Tablet */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .track-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
+/* Large Desktop */
+@media (min-width: 1440px) {
+  .track-grid {
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: var(--spacing-6);
+  }
+}
+
+/* Extra Wide Screens */
+@media (min-width: 1920px) {
+  .track-grid {
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: var(--spacing-8);
+  }
+}
+
+/* Ultra Wide Screens */
+@media (min-width: 2560px) {
+  .track-grid {
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: var(--spacing-8);
+  }
+}

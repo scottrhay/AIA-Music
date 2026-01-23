@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# SunoApp Configuration Script
+# AIASpeech Configuration Script
 # Run this to configure the application environment
 
 set -e
 
-APP_DIR="/var/www/sunoapp"
+APP_DIR="/var/www/aiaspeech"
 
-echo "=== SunoApp Configuration ==="
+echo "=== AIASpeech Configuration ==="
 echo ""
 
 # Navigate to app directory
@@ -18,7 +18,7 @@ echo "Configuring backend..."
 cd backend
 
 # Create .env file
-echo "Enter database password for sunoapp_user:"
+echo "Enter database password for aiaspeech_user:"
 read -s DB_PASSWORD
 
 echo "Generating secret keys..."
@@ -34,8 +34,8 @@ SECRET_KEY=$SECRET_KEY
 # Database Configuration
 DB_HOST=localhost
 DB_PORT=3306
-DB_NAME=sunoapp_db
-DB_USER=sunoapp_user
+DB_NAME=aiaspeech_db
+DB_USER=aiaspeech_user
 DB_PASSWORD=$DB_PASSWORD
 
 # JWT Configuration
@@ -43,7 +43,7 @@ JWT_SECRET_KEY=$JWT_SECRET
 JWT_ACCESS_TOKEN_EXPIRES=86400
 
 # CORS Configuration
-CORS_ORIGINS=https://suno.aiacopilot.com
+CORS_ORIGINS=https://speech.aiacopilot.com
 
 # Application Settings
 API_PREFIX=/api/v1
@@ -63,8 +63,8 @@ cd ../frontend
 
 # Create .env file for production
 cat > .env <<EOF
-REACT_APP_API_URL=https://suno.aiacopilot.com/api/v1
-REACT_APP_NAME=SunoApp
+REACT_APP_API_URL=https://speech.aiacopilot.com/api/v1
+REACT_APP_NAME=AIASpeech
 EOF
 
 # Install npm dependencies

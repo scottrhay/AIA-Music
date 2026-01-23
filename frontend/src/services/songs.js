@@ -6,17 +6,23 @@ export const getSongs = async (filters = {}) => {
   if (filters.status && filters.status !== 'all') {
     params.append('status', filters.status);
   }
-  if (filters.style_id) {
-    params.append('style_id', filters.style_id);
-  }
-  if (filters.vocal_gender && filters.vocal_gender !== 'all') {
-    params.append('vocal_gender', filters.vocal_gender);
+  if (filters.voice_name) {
+    params.append('voice_name', filters.voice_name);
   }
   if (filters.search) {
     params.append('search', filters.search);
   }
   if (filters.all_users) {
     params.append('all_users', 'true');
+  }
+  if (filters.style_id) {
+    params.append('style_id', filters.style_id);
+  }
+  if (filters.vocal_gender && filters.vocal_gender !== 'all') {
+    params.append('vocal_gender', filters.vocal_gender);
+  }
+  if (filters.playlist_id) {
+    params.append('playlist_id', filters.playlist_id);
   }
 
   const response = await api.get(`/songs/?${params.toString()}`);
@@ -49,7 +55,30 @@ export const getSongStats = async (allUsers = false) => {
   return response.data;
 };
 
-export const recreateSong = async (id) => {
-  const response = await api.post(`/songs/${id}/recreate`);
+export const updateSongRating = async (id, rating) => {
+  const response = await api.put(`/songs/${id}`, { star_rating: rating });
+  return response.data;
+};
+
+export const checkSongStatus = async (id) => {
+  const response = await api.post(`/songs/${id}/check-status`);
+  return response.data;
+};
+
+export const checkAllSubmitted = async () => {
+  const response = await api.post('/songs/check-submitted');
+  return response.data;
+};
+
+export const uploadSong = async (formData, onProgress) => {
+  const response = await api.post('/songs/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: (progressEvent) => {
+      if (onProgress && progressEvent.total) {
+        const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        onProgress(percent);
+      }
+    }
+  });
   return response.data;
 };

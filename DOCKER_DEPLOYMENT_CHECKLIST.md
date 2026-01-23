@@ -1,4 +1,4 @@
-# SunoApp Docker Deployment Checklist
+# AIASpeech Docker Deployment Checklist
 
 Clean, containerized deployment that keeps your VPS pristine.
 
@@ -14,7 +14,7 @@ Clean, containerized deployment that keeps your VPS pristine.
 - [ ] Code ready in local directory
 - [ ] SSH access to VPS (srv800338.hstgr.cloud)
 - [ ] MySQL root password available
-- [ ] Domain DNS configured (suno.aiacopilot.com → 168.231.71.238)
+- [ ] Domain DNS configured (speech.aiacopilot.com → 168.231.71.238)
 
 ## Step 1: Install Docker on VPS
 
@@ -41,24 +41,24 @@ From local machine:
 
 ```bash
 rsync -avz --exclude 'node_modules' --exclude 'venv' --exclude '.git' \
-  SunoApp/ root@srv800338.hstgr.cloud:/var/www/sunoapp/
+  AIASpeech/ root@srv800338.hstgr.cloud:/var/www/aiaspeech/
 ```
 
 - [ ] Code uploaded successfully
-- [ ] Verified files exist on VPS: `ls /var/www/sunoapp`
+- [ ] Verified files exist on VPS: `ls /var/www/aiaspeech`
 
 ## Step 3: Database Setup
 
 ```bash
-cd /var/www/sunoapp/deploy
+cd /var/www/aiaspeech/deploy
 chmod +x *.sh
 ./docker-setup-database.sh
 ```
 
 When prompted:
 - [ ] Entered MySQL root password
-- [ ] Database `sunoapp_db` created
-- [ ] User `sunoapp_user` created
+- [ ] Database `aiaspeech_db` created
+- [ ] User `aiaspeech_user` created
 - [ ] Schema imported
 - [ ] **SAVED database password** ⚠️ CRITICAL!
 
@@ -67,7 +67,7 @@ Database Password: `________________________________`
 ## Step 4: Configure Environment
 
 ```bash
-cd /var/www/sunoapp
+cd /var/www/aiaspeech
 cp .env.docker.example .env
 nano .env
 ```
@@ -84,14 +84,14 @@ Edit .env:
 - [ ] `SECRET_KEY` set (generated above)
 - [ ] `JWT_SECRET_KEY` set (generated above)
 - [ ] `DB_PASSWORD` set (from Step 3)
-- [ ] `DB_NAME=sunoapp_db` ✓ (already set)
-- [ ] `DB_USER=sunoapp_user` ✓ (already set)
-- [ ] `DOMAIN=suno.aiacopilot.com` ✓ (already set)
+- [ ] `DB_NAME=aiaspeech_db` ✓ (already set)
+- [ ] `DB_USER=aiaspeech_user` ✓ (already set)
+- [ ] `DOMAIN=speech.aiacopilot.com` ✓ (already set)
 
 ## Step 5: Deploy Application
 
 ```bash
-cd /var/www/sunoapp/deploy
+cd /var/www/aiaspeech/deploy
 ./docker-deploy.sh
 ```
 
@@ -113,18 +113,18 @@ curl http://localhost:5000/health
 docker-compose ps
 
 # Check logs
-docker-compose logs -f sunoapp
+docker-compose logs -f aiaspeech
 ```
 
 - [ ] Health check returns `{"status":"healthy"}`
 - [ ] All containers showing "Up"
 - [ ] No errors in logs
-- [ ] Can visit https://suno.aiacopilot.com
+- [ ] Can visit https://speech.aiacopilot.com
 - [ ] Login page loads
 
 ## Step 7: First Login
 
-- [ ] Visit https://suno.aiacopilot.com
+- [ ] Visit https://speech.aiacopilot.com
 - [ ] Login with admin/admin123
 - [ ] Changed admin password immediately
 - [ ] Created test song
@@ -135,12 +135,12 @@ docker-compose logs -f sunoapp
 Follow `docs/n8n_workflow_updates.md`:
 
 - [ ] Updated n8n to query MySQL instead of Excel
-- [ ] Updated n8n to call SunoApp webhooks
+- [ ] Updated n8n to call AIASpeech webhooks
 - [ ] Tested with one song end-to-end:
   - [ ] Song created with status "create"
   - [ ] n8n picked up song
   - [ ] Song status changed to "submitted"
-  - [ ] Suno callback received
+  - [ ] Azure Speech callback received
   - [ ] Song status changed to "completed"
   - [ ] Download URLs populated
 
@@ -157,13 +157,13 @@ Follow `docs/n8n_workflow_updates.md`:
 - [ ] Set up automatic MySQL backups:
   ```bash
   # Add to crontab: crontab -e
-  0 2 * * * mysqldump -u root -p'PASSWORD' sunoapp_db > /var/backups/sunoapp_$(date +\%Y\%m\%d).sql
+  0 2 * * * mysqldump -u root -p'PASSWORD' aiaspeech_db > /var/backups/aiaspeech_$(date +\%Y\%m\%d).sql
   ```
 
 - [ ] Documented useful commands (bookmark these):
   ```bash
   # View logs
-  cd /var/www/sunoapp && make logs
+  cd /var/www/aiaspeech && make logs
 
   # Restart
   make restart
@@ -172,7 +172,7 @@ Follow `docs/n8n_workflow_updates.md`:
   make down
 
   # Complete removal
-  make clean && cd /var/www && rm -rf sunoapp
+  make clean && cd /var/www && rm -rf aiaspeech
   ```
 
 ## Step 10: Team Setup
@@ -204,7 +204,7 @@ Verify each feature works:
 
 ```bash
 # Navigate to app
-cd /var/www/sunoapp
+cd /var/www/aiaspeech
 
 # View all commands
 make help
@@ -249,17 +249,17 @@ docker ps -a
 docker-compose logs -f
 
 # Shell into app container
-docker-compose exec sunoapp sh
+docker-compose exec aiaspeech sh
 
 # Restart specific service
-docker-compose restart sunoapp
+docker-compose restart aiaspeech
 
 # View resource usage
 docker stats
 
 # Remove everything
 docker-compose down -v
-rm -rf /var/www/sunoapp
+rm -rf /var/www/aiaspeech
 ```
 
 ## Backup Strategy
@@ -271,25 +271,25 @@ rm -rf /var/www/sunoapp
 ## Monitoring
 
 - [ ] Bookmarked log locations:
-  - App logs: `/var/www/sunoapp/logs/gunicorn_*.log`
+  - App logs: `/var/www/aiaspeech/logs/gunicorn_*.log`
   - Container logs: `docker-compose logs -f`
-  - Nginx logs: `/var/www/sunoapp/logs/nginx/`
+  - Nginx logs: `/var/www/aiaspeech/logs/nginx/`
 
 ## Complete Removal (If Needed)
 
-To completely remove SunoApp and restore VPS to clean state:
+To completely remove AIASpeech and restore VPS to clean state:
 
 ```bash
-cd /var/www/sunoapp
+cd /var/www/aiaspeech
 make clean
 cd /var/www
-rm -rf sunoapp
+rm -rf aiaspeech
 
 # Optionally remove database
 mysql -u root -p
-DROP DATABASE sunoapp_db;
-DROP USER 'sunoapp_user'@'localhost';
-DROP USER 'sunoapp_user'@'%';
+DROP DATABASE aiaspeech_db;
+DROP USER 'aiaspeech_user'@'localhost';
+DROP USER 'aiaspeech_user'@'%';
 exit;
 ```
 
@@ -299,7 +299,7 @@ exit;
 
 ✅ Deployment successful when:
 
-- Application accessible at https://suno.aiacopilot.com
+- Application accessible at https://speech.aiacopilot.com
 - All containers running (`docker-compose ps` shows "Up")
 - Can login and manage songs
 - n8n integration working
@@ -319,14 +319,14 @@ sudo systemctl restart mysql
 
 **Container won't start:**
 ```bash
-docker-compose logs sunoapp
+docker-compose logs aiaspeech
 # Check error messages
 ```
 
 **SSL certificate issues:**
 ```bash
 docker-compose stop nginx
-sudo certbot certonly --standalone -d suno.aiacopilot.com
+sudo certbot certonly --standalone -d speech.aiacopilot.com
 docker-compose start nginx
 ```
 

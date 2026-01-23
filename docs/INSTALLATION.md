@@ -1,28 +1,28 @@
-# SunoApp Installation Guide
+# AIASpeech Installation Guide
 
-Complete guide to deploy SunoApp on your Hostinger VPS.
+Complete guide to deploy AIASpeech on your Hostinger VPS.
 
 ## Prerequisites
 
 - Hostinger VPS running Ubuntu 24.04 (✓ You have this)
 - MySQL installed and running (✓ You have this)
 - n8n installed (✓ You have this)
-- Domain: suno.aiacopilot.com pointing to your VPS IP
+- Domain: speech.aiacopilot.com pointing to your VPS IP
 - SSH access to your VPS
 
 ## Step-by-Step Installation
 
 ### 1. Upload Code to VPS
 
-From your local machine, upload the SunoApp directory to your VPS:
+From your local machine, upload the AIASpeech directory to your VPS:
 
 ```bash
 # Using scp
-scp -r SunoApp root@srv800338.hstgr.cloud:/var/www/
+scp -r AIASpeech root@srv800338.hstgr.cloud:/var/www/
 
 # OR using rsync (recommended)
 rsync -avz --exclude 'node_modules' --exclude 'venv' --exclude '.git' \
-  SunoApp/ root@srv800338.hstgr.cloud:/var/www/sunoapp/
+  AIASpeech/ root@srv800338.hstgr.cloud:/var/www/aiaspeech/
 ```
 
 ### 2. Initial VPS Setup
@@ -36,7 +36,7 @@ ssh root@srv800338.hstgr.cloud
 Run the VPS setup script:
 
 ```bash
-cd /var/www/sunoapp/deploy
+cd /var/www/aiaspeech/deploy
 chmod +x *.sh
 ./setup_vps.sh
 ```
@@ -56,8 +56,8 @@ Run the database setup script:
 ```
 
 When prompted, enter your MySQL root password. The script will:
-- Create database `sunoapp_db`
-- Create user `sunoapp_user` with a generated password
+- Create database `aiaspeech_db`
+- Create user `aiaspeech_user` with a generated password
 - Import the database schema
 - Display credentials (SAVE THESE!)
 
@@ -100,11 +100,11 @@ When prompted for SSL setup:
 
 ### 6. Configure DNS
 
-Ensure your domain `suno.aiacopilot.com` points to your VPS IP:
+Ensure your domain `speech.aiacopilot.com` points to your VPS IP:
 
 1. Log in to your domain registrar (where you bought aiacopilot.com)
 2. Add an A record:
-   - Host: `suno`
+   - Host: `speech`
    - Points to: `168.231.71.238` (your VPS IP)
    - TTL: 3600 (or default)
 
@@ -115,7 +115,7 @@ Wait 5-10 minutes for DNS propagation.
 Once DNS is configured and pointing to your server:
 
 ```bash
-sudo certbot --nginx -d suno.aiacopilot.com
+sudo certbot --nginx -d speech.aiacopilot.com
 ```
 
 Follow the prompts to set up the SSL certificate.
@@ -126,7 +126,7 @@ Follow the guide in `docs/n8n_workflow_updates.md` to update your n8n workflow t
 
 ### 9. Test the Application
 
-1. Visit https://suno.aiacopilot.com
+1. Visit https://speech.aiacopilot.com
 2. Register a new account
 3. Create a test song
 4. Check that it appears in the song list
@@ -162,13 +162,13 @@ View application logs:
 
 ```bash
 # Flask application logs
-sudo journalctl -u sunoapp -f
+sudo journalctl -u aiaspeech -f
 
 # Gunicorn access logs
-tail -f /var/www/sunoapp/logs/gunicorn_access.log
+tail -f /var/www/aiaspeech/logs/gunicorn_access.log
 
 # Gunicorn error logs
-tail -f /var/www/sunoapp/logs/gunicorn_error.log
+tail -f /var/www/aiaspeech/logs/gunicorn_error.log
 
 # Nginx access logs
 tail -f /var/log/nginx/access.log
@@ -181,10 +181,10 @@ tail -f /var/log/nginx/error.log
 
 ```bash
 # Restart Flask application
-sudo systemctl restart sunoapp
+sudo systemctl restart aiaspeech
 
 # Check Flask application status
-sudo systemctl status sunoapp
+sudo systemctl status aiaspeech
 
 # Restart Nginx
 sudo systemctl restart nginx
@@ -196,7 +196,7 @@ sudo nginx -t
 sudo certbot renew
 
 # Access MySQL
-mysql -u sunoapp_user -p sunoapp_db
+mysql -u aiaspeech_user -p aiaspeech_db
 ```
 
 ## Updating the Application
@@ -206,15 +206,15 @@ When you make changes to the code:
 ```bash
 # Upload new code to VPS
 rsync -avz --exclude 'node_modules' --exclude 'venv' \
-  SunoApp/ root@srv800338.hstgr.cloud:/var/www/sunoapp/
+  AIASpeech/ root@srv800338.hstgr.cloud:/var/www/aiaspeech/
 
 # SSH into VPS
 ssh root@srv800338.hstgr.cloud
 
 # Rebuild frontend and restart services
-cd /var/www/sunoapp
+cd /var/www/aiaspeech
 cd frontend && npm run build && cd ..
-sudo systemctl restart sunoapp
+sudo systemctl restart aiaspeech
 sudo systemctl restart nginx
 ```
 
@@ -224,10 +224,10 @@ sudo systemctl restart nginx
 
 ```bash
 # Check Flask service status
-sudo systemctl status sunoapp
+sudo systemctl status aiaspeech
 
 # Check logs
-sudo journalctl -u sunoapp -n 50
+sudo journalctl -u aiaspeech -n 50
 ```
 
 Common issues:
@@ -257,7 +257,7 @@ Common issues:
 
 ```bash
 # Test MySQL connection
-mysql -u sunoapp_user -p sunoapp_db
+mysql -u aiaspeech_user -p aiaspeech_db
 
 # Check if MySQL is running
 sudo systemctl status mysql
@@ -268,8 +268,8 @@ sudo systemctl status mysql
 This usually means the Flask backend isn't running:
 
 ```bash
-sudo systemctl restart sunoapp
-sudo systemctl status sunoapp
+sudo systemctl restart aiaspeech
+sudo systemctl status aiaspeech
 ```
 
 ## Security Recommendations
@@ -292,7 +292,7 @@ sudo systemctl status sunoapp
 4. **Regular backups:**
    ```bash
    # Backup database
-   mysqldump -u root -p sunoapp_db > backup_$(date +%Y%m%d).sql
+   mysqldump -u root -p aiaspeech_db > backup_$(date +%Y%m%d).sql
    ```
 
 5. **Keep secrets in `.env` files secure**

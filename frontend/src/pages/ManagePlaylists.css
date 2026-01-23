@@ -1,0 +1,161 @@
+/* ManagePlaylists specific styles */
+
+.playlist-creator {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-500);
+  margin: var(--spacing-1) 0 0 0;
+}
+
+.readonly-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  margin-left: var(--spacing-2);
+  background: var(--color-neutral-200);
+  color: var(--color-neutral-600);
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-medium);
+  vertical-align: middle;
+}
+
+.style-item.active .readonly-badge {
+  background: rgba(255, 255, 255, 0.3);
+  color: var(--color-white);
+}
+
+.playlist-songs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.playlist-song-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
+  background: var(--color-neutral-50);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-neutral-200);
+  transition: all var(--transition-fast);
+}
+
+.playlist-song-item:hover {
+  background: var(--color-white);
+  border-color: var(--color-primary-300);
+  box-shadow: var(--shadow-sm);
+}
+
+.song-number {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-neutral-200);
+  color: var(--color-neutral-600);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  flex-shrink: 0;
+}
+
+.song-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.song-title {
+  display: block;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-neutral-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.song-meta {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-500);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.song-status {
+  padding: var(--spacing-1) var(--spacing-2);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.song-status.ready {
+  background: var(--color-success-100);
+  color: var(--color-success-700);
+}
+
+.btn-icon {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.btn-remove {
+  background: var(--color-neutral-100);
+  border: 1px solid var(--color-neutral-300);
+  color: var(--color-neutral-600);
+  border-radius: var(--radius-base);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-remove:hover {
+  background: var(--color-error-100);
+  border-color: var(--color-error-300);
+  color: var(--color-error-600);
+}
+
+.btn-danger {
+  background: var(--color-error-500);
+  color: var(--color-white);
+  border: none;
+  padding: var(--spacing-2) var(--spacing-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-danger:hover {
+  background: var(--color-error-600);
+}
+
+.empty-songs {
+  color: var(--color-neutral-500);
+  font-style: italic;
+  text-align: center;
+  padding: var(--spacing-6);
+}
+
+.alert {
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.alert-error {
+  background: var(--color-error-100);
+  color: var(--color-error-700);
+  border: 1px solid var(--color-error-200);
+}

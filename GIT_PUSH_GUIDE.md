@@ -1,10 +1,10 @@
-# How to Push SunoApp to GitHub Using VS Code
+# How to Push AIASpeech to GitHub Using VS Code
 
 ## Step 1: Open VS Code
 
 1. Open VS Code
 2. Go to **File > Open Folder**
-3. Navigate to: `C:\Users\Scott\OneDrive - AIA Copilot\Documents\Code\SunoApp`
+3. Navigate to: `C:\Users\Scott\OneDrive - AIA Copilot\Documents\Code\AIASpeech`
 4. Click **Select Folder**
 
 ## Step 2: Check Source Control Panel
@@ -45,12 +45,12 @@
 1. At the top of the Source Control panel, you'll see a text box that says "Message"
 2. Type a descriptive commit message, for example:
    ```
-   Initial commit: SunoApp music creation platform
+   Initial commit: AIASpeech music creation platform
 
-   - Flask backend with Suno API integration
+   - Flask backend with Azure Speech API integration
    - React frontend with song and style management
    - Docker deployment with MySQL
-   - Direct Suno API calls (removed n8n dependency for creation)
+   - Direct Azure Speech API calls (removed n8n dependency for creation)
    - Comprehensive error handling for API failures
    ```
 
@@ -67,18 +67,18 @@ If you haven't created a GitHub repository yet:
 
 1. Go to [github.com](https://github.com) and log in
 2. Click the **"+"** icon in the top-right → **New repository**
-3. Name it: `SunoApp`
+3. Name it: `AIASpeech`
 4. Choose **Private** (recommended for projects with configuration files)
 5. Do NOT initialize with README (you already have one)
 6. Click **Create repository**
 
-7. Copy the repository URL (it will look like: `https://github.com/yourusername/SunoApp.git`)
+7. Copy the repository URL (it will look like: `https://github.com/yourusername/AIASpeech.git`)
 
 8. Back in VS Code, open the **Terminal** (View > Terminal or `` Ctrl+` ``)
 
 9. Run these commands:
    ```bash
-   git remote add origin https://github.com/yourusername/SunoApp.git
+   git remote add origin https://github.com/yourusername/AIASpeech.git
    git branch -M main
    git push -u origin main
    ```

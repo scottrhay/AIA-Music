@@ -47,7 +47,7 @@ def create_style():
     # Create style
     style = Style(
         name=data['name'],
-        style_prompt=data.get('style_prompt'),
+        style_prompt=data.get('style_prompt', ''),
         created_by=user_id
     )
 
@@ -67,16 +67,26 @@ def create_style():
 @jwt_required()
 def update_style(style_id):
     """Update an existing style."""
+    user_id = get_jwt_identity()
     style = Style.query.get(style_id)
 
     if not style:
         return jsonify({'error': 'Style not found'}), 404
 
+    # Check if user owns this style
+    if style.created_by != user_id:
+        return jsonify({'error': 'You can only edit styles you created'}), 403
+
     data = request.get_json()
+
+    # Trim whitespace from name if present
+    if 'name' in data:
+        data['name'] = data['name'].strip()
 
     # Check if name is being changed to an existing name
     if 'name' in data and data['name'] != style.name:
-        if Style.query.filter_by(name=data['name']).first():
+        existing_style = Style.query.filter_by(name=data['name']).first()
+        if existing_style and existing_style.id != style.id:
             return jsonify({'error': 'Style name already exists'}), 409
 
     # Update fields
@@ -100,10 +110,15 @@ def update_style(style_id):
 @jwt_required()
 def delete_style(style_id):
     """Delete a style."""
+    user_id = get_jwt_identity()
     style = Style.query.get(style_id)
 
     if not style:
         return jsonify({'error': 'Style not found'}), 404
+
+    # Check if user owns this style
+    if style.created_by != user_id:
+        return jsonify({'error': 'You can only delete styles you created'}), 403
 
     # Check if style is being used by any songs
     if style.songs.count() > 0:

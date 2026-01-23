@@ -1,4 +1,4 @@
-# SunoApp - Project Summary
+# AIASpeech - Project Summary
 
 ## What We Built
 
@@ -11,7 +11,7 @@ A complete web-based music creation management platform that replaces your Excel
 - **Style Library**: Manage reusable music style templates
 - **Team Collaboration**: Multiple users can work on songs simultaneously
 - **Search & Filter**: Find songs by status, style, lyrics, title, or vocal gender
-- **Real-time Updates**: n8n integration automatically submits songs to Suno and updates status
+- **Real-time Updates**: n8n integration automatically submits songs to Azure Speech and updates status
 - **Download Tracking**: Direct links to generated MP3 files
 
 ### Technical Features
@@ -38,7 +38,7 @@ Nginx (SSL + Reverse Proxy)
                             ↕
                       n8n Workflows
                             ↕
-                        Suno API
+                        Azure Speech API
 ```
 
 ## Technology Stack
@@ -63,12 +63,12 @@ Nginx (SSL + Reverse Proxy)
 - **Process Manager**: systemd
 - **SSL**: Let's Encrypt (Certbot)
 - **Automation**: n8n
-- **Domain**: suno.aiacopilot.com
+- **Domain**: speech.aiacopilot.com
 
 ## Project Structure
 
 ```
-SunoApp/
+AIASpeech/
 ├── backend/                    # Flask API
 │   ├── app/
 │   │   ├── __init__.py        # App factory
@@ -105,7 +105,7 @@ SunoApp/
 │   ├── deploy.sh              # Full deployment
 │   ├── nginx_config           # Nginx configuration
 │   ├── gunicorn_config.py     # Gunicorn settings
-│   └── sunoapp.service        # systemd service
+│   └── aiaspeech.service        # systemd service
 │
 └── docs/                       # Documentation
     ├── QUICK_START.md         # 30-minute quick start
@@ -127,7 +127,7 @@ SunoApp/
 
 ### Songs
 - Stores song creation tracking
-- Fields: id, user_id, status, specific_title, specific_lyrics, prompt_to_generate, style_id, vocal_gender, download_url_1, download_url_2, suno_task_id, timestamps
+- Fields: id, user_id, status, specific_title, specific_lyrics, prompt_to_generate, style_id, vocal_gender, download_url_1, download_url_2, azure_task_id, timestamps
 - Status values: create, submitted, completed, unspecified
 
 ## API Endpoints
@@ -154,37 +154,37 @@ SunoApp/
 - `DELETE /api/v1/styles/:id` - Delete style
 
 ### Webhooks (for n8n)
-- `POST /api/v1/webhooks/suno-callback` - Suno completion callback
-- `POST /api/v1/webhooks/suno-submitted` - Song submitted notification
+- `POST /api/v1/webhooks/azure-callback` - Azure Speech completion callback
+- `POST /api/v1/webhooks/azure-submitted` - Song submitted notification
 
 ### Utility
 - `GET /health` - Health check
 
 ## Workflow Integration
 
-### n8n → SunoApp Flow
+### n8n → AIASpeech Flow
 
 1. **n8n Schedule Trigger** (every 5 min)
    - Queries MySQL for songs with status='create'
    - Loops through each song
-   - POSTs to Suno API
-   - Calls `/webhooks/suno-submitted` to update status
+   - POSTs to Azure Speech API
+   - Calls `/webhooks/azure-submitted` to update status
 
-2. **Suno Callback → n8n**
-   - Suno sends callback when generation complete
+2. **Azure Speech Callback → n8n**
+   - Azure Speech sends callback when generation complete
    - n8n receives webhook
-   - Calls `/webhooks/suno-callback` with results
-   - SunoApp updates song with status='completed' and download URLs
+   - Calls `/webhooks/azure-callback` with results
+   - AIASpeech updates song with status='completed' and download URLs
 
 ### What Changed from Excel
 
-| Excel Workflow | New SunoApp Workflow |
+| Excel Workflow | New AIASpeech Workflow |
 |----------------|---------------------|
 | OneDrive - Get Excel File | MySQL - Query songs table |
 | Excel - Get Songs Table | SQL: SELECT * FROM songs WHERE status='create' |
 | Code - Filter by Status | Already filtered in SQL query |
-| Excel - Update Status | POST to /webhooks/suno-submitted |
-| Webhook → Excel Update | POST to /webhooks/suno-callback |
+| Excel - Update Status | POST to /webhooks/azure-submitted |
+| Webhook → Excel Update | POST to /webhooks/azure-callback |
 
 ## Deployment
 
@@ -207,7 +207,7 @@ SunoApp/
 - Automatic SSL certificate from Let's Encrypt
 - Auto-renewal via certbot
 - HTTP → HTTPS redirect
-- Domain: https://suno.aiacopilot.com
+- Domain: https://speech.aiacopilot.com
 
 ## Security Features
 
@@ -233,7 +233,7 @@ SunoApp/
 ### What You Keep
 - All your data (can import or start fresh)
 - Your n8n instance (just update the workflow)
-- Your Suno API integration
+- Your Azure Speech API integration
 - Your creative workflow
 
 ### What You Gain
@@ -248,7 +248,7 @@ SunoApp/
 - Mobile friendly
 
 ### Migration Steps
-1. Deploy SunoApp (keep Excel running)
+1. Deploy AIASpeech (keep Excel running)
 2. Test thoroughly
 3. Optionally import data from Excel
 4. Update n8n workflow
@@ -284,28 +284,28 @@ All documentation is in the `docs/` folder:
 ## Support & Maintenance
 
 ### Monitoring
-- Application logs: `sudo journalctl -u sunoapp -f`
-- Access logs: `/var/www/sunoapp/logs/gunicorn_access.log`
-- Error logs: `/var/www/sunoapp/logs/gunicorn_error.log`
+- Application logs: `sudo journalctl -u aiaspeech -f`
+- Access logs: `/var/www/aiaspeech/logs/gunicorn_access.log`
+- Error logs: `/var/www/aiaspeech/logs/gunicorn_error.log`
 - Database: Direct MySQL access
 
 ### Common Maintenance Tasks
-- Restart app: `sudo systemctl restart sunoapp`
+- Restart app: `sudo systemctl restart aiaspeech`
 - Rebuild frontend: `cd frontend && npm run build`
-- Database backup: `mysqldump -u sunoapp_user -p sunoapp_db > backup.sql`
-- View logs: `sudo journalctl -u sunoapp -f`
+- Database backup: `mysqldump -u aiaspeech_user -p aiaspeech_db > backup.sql`
+- View logs: `sudo journalctl -u aiaspeech -f`
 - SSL renewal: Automatic via certbot (can run manually: `sudo certbot renew`)
 
 ### Updates
 To update the application:
 1. Upload new code to VPS
 2. Rebuild frontend: `npm run build`
-3. Restart services: `sudo systemctl restart sunoapp nginx`
+3. Restart services: `sudo systemctl restart aiaspeech nginx`
 
 ## Success Metrics
 
 ✅ **Project Complete When:**
-- ✓ Application deployed at https://suno.aiacopilot.com
+- ✓ Application deployed at https://speech.aiacopilot.com
 - ✓ Users can login and manage songs
 - ✓ n8n integration working end-to-end
 - ✓ Team can collaborate on songs

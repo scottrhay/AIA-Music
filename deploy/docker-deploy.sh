@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# SunoApp Docker Deployment Script
+# AIASpeech Docker Deployment Script
 # Run this to deploy or update the application using Docker
 
 set -e
 
-APP_DIR="/var/www/sunoapp"
+APP_DIR="/var/www/aiaspeech"
 
-echo "=== SunoApp Docker Deployment ==="
+echo "=== AIASpeech Docker Deployment ==="
 echo ""
 
 # Check if Docker is installed
@@ -64,16 +64,16 @@ if docker-compose ps | grep -q "Up"; then
     docker-compose ps
     echo ""
     echo "Your app should now be accessible at:"
-    echo "https://suno.aiacopilot.com"
+    echo "https://speech.aiacopilot.com"
     echo ""
     echo "Useful commands:"
     echo "  View logs:           docker-compose logs -f"
-    echo "  View app logs:       docker-compose logs -f sunoapp"
+    echo "  View app logs:       docker-compose logs -f aiaspeech"
     echo "  View nginx logs:     docker-compose logs -f nginx"
     echo "  Restart:             docker-compose restart"
     echo "  Stop:                docker-compose down"
     echo "  Rebuild and restart: docker-compose up -d --build"
-    echo "  Shell into app:      docker-compose exec sunoapp sh"
+    echo "  Shell into app:      docker-compose exec aiaspeech sh"
 else
     echo ""
     echo "Error: Containers failed to start"
@@ -82,7 +82,7 @@ else
 fi
 
 # SSL Certificate Setup (if needed)
-if [ ! -f /etc/letsencrypt/live/suno.aiacopilot.com/fullchain.pem ]; then
+if [ ! -f /etc/letsencrypt/live/speech.aiacopilot.com/fullchain.pem ]; then
     echo ""
     echo "=== SSL Certificate Setup ==="
     echo "SSL certificate not found. Setting up Let's Encrypt..."
@@ -94,7 +94,7 @@ if [ ! -f /etc/letsencrypt/live/suno.aiacopilot.com/fullchain.pem ]; then
         docker-compose stop nginx
 
         # Run certbot on host
-        sudo certbot certonly --standalone -d suno.aiacopilot.com
+        sudo certbot certonly --standalone -d speech.aiacopilot.com
 
         # Start nginx again
         docker-compose start nginx
@@ -103,7 +103,7 @@ if [ ! -f /etc/letsencrypt/live/suno.aiacopilot.com/fullchain.pem ]; then
         echo "SSL certificate installed successfully!"
     else
         echo "Skipping SSL setup. You can run it later with:"
-        echo "sudo certbot certonly --standalone -d suno.aiacopilot.com"
+        echo "sudo certbot certonly --standalone -d speech.aiacopilot.com"
     fi
 fi
 

@@ -14,7 +14,7 @@ bcrypt = Bcrypt()
 
 def create_app(config_name='default'):
     """Application factory pattern."""
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder='/app/static', static_url_path='/static')
 
     # Load configuration
     app.config.from_object(config[config_name])
@@ -32,17 +32,18 @@ def create_app(config_name='default'):
     CORS(app, origins=app.config['CORS_ORIGINS'])
 
     # Register blueprints
-    from app.routes import auth, songs, styles, webhooks
+    from app.routes import auth, songs, styles, webhooks, playlists
 
     api_prefix = app.config['API_PREFIX']
     app.register_blueprint(auth.bp, url_prefix=f'{api_prefix}/auth')
     app.register_blueprint(songs.bp, url_prefix=f'{api_prefix}/songs')
     app.register_blueprint(styles.bp, url_prefix=f'{api_prefix}/styles')
     app.register_blueprint(webhooks.bp, url_prefix=f'{api_prefix}/webhooks')
+    app.register_blueprint(playlists.bp, url_prefix=f'{api_prefix}/playlists')
 
     # Health check endpoint
     @app.route('/health')
     def health_check():
-        return {'status': 'healthy', 'service': 'SunoApp API'}, 200
+        return {'status': 'healthy', 'service': 'AIAMusic API'}, 200
 
     return app

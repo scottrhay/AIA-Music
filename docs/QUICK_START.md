@@ -1,12 +1,12 @@
-# SunoApp Quick Start Guide
+# AIASpeech Quick Start Guide
 
-Get SunoApp up and running in 30 minutes.
+Get AIASpeech up and running in 30 minutes.
 
 ## Overview
 
-SunoApp is a web-based music creation management platform that:
+AIASpeech is a web-based music creation management platform that:
 - Manages songs and music styles
-- Integrates with Suno API for song generation
+- Integrates with Azure Speech API for song generation
 - Replaces your Excel workflow with a modern database
 - Supports team collaboration
 
@@ -18,7 +18,7 @@ You already have:
 - ✓ Hostinger VPS (Ubuntu 24.04, 2 CPU, 8GB RAM)
 - ✓ MySQL installed
 - ✓ n8n installed
-- ✓ Domain: suno.aiacopilot.com
+- ✓ Domain: speech.aiacopilot.com
 
 ### 2. Upload Code (5 minutes)
 
@@ -26,7 +26,7 @@ You already have:
 # From your local machine
 cd "C:\Users\Scott\OneDrive - AIA Copilot\Documents\Code"
 rsync -avz --exclude 'node_modules' --exclude 'venv' \
-  SunoApp/ root@srv800338.hstgr.cloud:/var/www/sunoapp/
+  AIASpeech/ root@srv800338.hstgr.cloud:/var/www/aiaspeech/
 ```
 
 ### 3. Initial Setup (10 minutes)
@@ -36,7 +36,7 @@ rsync -avz --exclude 'node_modules' --exclude 'venv' \
 ssh root@srv800338.hstgr.cloud
 
 # Run setup scripts
-cd /var/www/sunoapp/deploy
+cd /var/www/aiaspeech/deploy
 chmod +x *.sh
 ./setup_vps.sh        # Install system dependencies
 ./setup_database.sh   # Create database (SAVE THE PASSWORD!)
@@ -62,7 +62,7 @@ Key changes:
 
 ## First Login
 
-1. Visit: https://suno.aiacopilot.com
+1. Visit: https://speech.aiacopilot.com
 2. Login with:
    - Username: `admin`
    - Password: `admin123`
@@ -78,16 +78,16 @@ Key changes:
    - Vocal: Male/Female
 3. Click "Create Song"
 4. Song status will be "Create"
-5. n8n will pick it up and submit to Suno
+5. n8n will pick it up and submit to Azure Speech
 6. Status will change to "Submitted" then "Completed"
 
 ## Quick Reference
 
 ### Access Points
 
-- **App:** https://suno.aiacopilot.com
-- **API:** https://suno.aiacopilot.com/api/v1
-- **Health:** https://suno.aiacopilot.com/health
+- **App:** https://speech.aiacopilot.com
+- **API:** https://speech.aiacopilot.com/api/v1
+- **Health:** https://speech.aiacopilot.com/health
 
 ### Common Commands
 
@@ -96,29 +96,29 @@ Key changes:
 ssh root@srv800338.hstgr.cloud
 
 # Restart app
-sudo systemctl restart sunoapp
+sudo systemctl restart aiaspeech
 
 # View logs
-sudo journalctl -u sunoapp -f
+sudo journalctl -u aiaspeech -f
 
 # Restart nginx
 sudo systemctl restart nginx
 
 # Check status
-sudo systemctl status sunoapp
+sudo systemctl status aiaspeech
 ```
 
 ### Database Access
 
 ```bash
-mysql -u sunoapp_user -p sunoapp_db
+mysql -u aiaspeech_user -p aiaspeech_db
 ```
 
 ### File Locations
 
-- App: `/var/www/sunoapp`
-- Logs: `/var/www/sunoapp/logs`
-- Config: `/var/www/sunoapp/backend/.env`
+- App: `/var/www/aiaspeech`
+- Logs: `/var/www/aiaspeech/logs`
+- Config: `/var/www/aiaspeech/backend/.env`
 
 ## What's Next?
 
@@ -145,7 +145,7 @@ mysql -u sunoapp_user -p sunoapp_db
 
 ```bash
 # Check DNS
-nslookup suno.aiacopilot.com
+nslookup speech.aiacopilot.com
 
 # Check nginx
 sudo systemctl status nginx
@@ -159,21 +159,21 @@ sudo certbot certificates
 
 ```bash
 # Check Flask
-sudo systemctl status sunoapp
-sudo journalctl -u sunoapp -n 50
+sudo systemctl status aiaspeech
+sudo journalctl -u aiaspeech -n 50
 
 # Restart
-sudo systemctl restart sunoapp
+sudo systemctl restart aiaspeech
 ```
 
 ### Database errors
 
 ```bash
 # Test connection
-mysql -u sunoapp_user -p sunoapp_db
+mysql -u aiaspeech_user -p aiaspeech_db
 
 # Check logs
-sudo tail -f /var/www/sunoapp/logs/gunicorn_error.log
+sudo tail -f /var/www/aiaspeech/logs/gunicorn_error.log
 ```
 
 ## Need Help?
@@ -189,7 +189,7 @@ sudo tail -f /var/www/sunoapp/logs/gunicorn_error.log
 
 ```
 ┌─────────────────────────────────────────────┐
-│  Users → https://suno.aiacopilot.com       │
+│  Users → https://speech.aiacopilot.com       │
 │           ↓                                  │
 │        Nginx (SSL + Proxy)                  │
 │           ↓                                  │
@@ -202,17 +202,17 @@ sudo tail -f /var/www/sunoapp/logs/gunicorn_error.log
 │                               ↕              │
 │                          n8n Workflows      │
 │                               ↕              │
-│                          Suno API           │
+│                          Azure Speech API           │
 └─────────────────────────────────────────────┘
 ```
 
 ## Success Criteria
 
 You'll know it's working when:
-- ✓ You can login at https://suno.aiacopilot.com
+- ✓ You can login at https://speech.aiacopilot.com
 - ✓ You can create and view songs
 - ✓ n8n picks up songs with status "create"
-- ✓ Songs get submitted to Suno
+- ✓ Songs get submitted to Azure Speech
 - ✓ Completed songs show download URLs
 
 ## Estimated Costs
@@ -222,6 +222,6 @@ You'll know it's working when:
 - **SSL:** $0 (Let's Encrypt free)
 - **Total additional cost:** $0/month
 
-You're already paying for the VPS and domain, so SunoApp costs nothing extra!
+You're already paying for the VPS and domain, so AIASpeech costs nothing extra!
 
 Enjoy your new song management platform! 🎵

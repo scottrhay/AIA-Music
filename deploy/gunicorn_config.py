@@ -1,4 +1,4 @@
-# Gunicorn configuration file for SunoApp
+# Gunicorn configuration file for AIASpeech
 
 import multiprocessing
 
@@ -14,17 +14,17 @@ timeout = 30
 keepalive = 2
 
 # Logging
-accesslog = '/var/www/sunoapp/logs/gunicorn_access.log'
-errorlog = '/var/www/sunoapp/logs/gunicorn_error.log'
+accesslog = '/var/www/aiaspeech/logs/gunicorn_access.log'
+errorlog = '/var/www/aiaspeech/logs/gunicorn_error.log'
 loglevel = 'info'
 access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"'
 
 # Process naming
-proc_name = 'sunoapp'
+proc_name = 'aiaspeech'
 
 # Server mechanics
 daemon = False
-pidfile = '/var/www/sunoapp/gunicorn.pid'
+pidfile = '/var/www/aiaspeech/gunicorn.pid'
 user = None
 group = None
 tmp_upload_dir = None

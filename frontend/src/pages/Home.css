@@ -29,6 +29,15 @@
   border-bottom-color: #667eea;
 }
 
+.status-tab.failed {
+  color: #dc3545;
+}
+
+.status-tab.failed.active {
+  color: #dc3545;
+  border-bottom-color: #dc3545;
+}
+
 .filters-row {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr auto;

@@ -1,24 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getSongs, getSongStats, deleteSong, recreateSong } from '../services/songs';
-import { getStyles } from '../services/styles';
+import { getSongs, getSongStats, deleteSong } from '../services/songs';
 import { getUser } from '../services/auth';
 import SongCard from '../components/SongCard';
 import SongModal from '../components/SongModal';
+import SongViewModal from '../components/SongViewModal';
 import './Home.css';
+
+// Azure Speech voice options (same as SongModal)
+const AZURE_VOICES = [
+  { id: 'en-US-AndrewMultilingualNeural', name: 'Andrew Dragon HD Latest' },
+  { id: 'en-US-AvaMultilingualNeural', name: 'Ava Multilingual' },
+  { id: 'en-US-PhoebeMultilingualNeural', name: 'Phoebe Multilingual' },
+  { id: 'en-US-ChristopherMultilingualNeural', name: 'Christopher Multilingual' },
+  { id: 'en-US-BrandonMultilingualNeural', name: 'Brandon Multilingual' },
+  { id: 'en-US-DustinMultilingualNeural', name: 'Dustin Multilingual' },
+  { id: 'en-US-SteffanMultilingualNeural', name: 'Steffan Multilingual' },
+];
 
 function Home({ onLogout }) {
   const navigate = useNavigate();
   const [songs, setSongs] = useState([]);
-  const [styles, setStyles] = useState([]);
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewingSong, setViewingSong] = useState(null);
   const [editingSong, setEditingSong] = useState(null);
   const [filters, setFilters] = useState({
     status: 'all',
-    style_id: '',
-    vocal_gender: 'all',
+    voice_name: '',
     search: '',
     all_users: false,
   });
@@ -29,17 +40,28 @@ function Home({ onLogout }) {
     loadData();
   }, [filters]);
 
+  // Auto-refresh when there are songs in submitted status
+  useEffect(() => {
+    const hasSubmittedSongs = songs.some(song => song.status === 'submitted');
+
+    if (hasSubmittedSongs) {
+      const intervalId = setInterval(() => {
+        loadData();
+      }, 5000); // Poll every 5 seconds
+
+      return () => clearInterval(intervalId);
+    }
+  }, [songs]);
+
   const loadData = async () => {
     try {
       setLoading(true);
-      const [songsData, stylesData, statsData] = await Promise.all([
+      const [songsData, statsData] = await Promise.all([
         getSongs(filters),
-        getStyles(),
         getSongStats(filters.all_users),
       ]);
 
       setSongs(songsData.songs);
-      setStyles(stylesData.styles);
       setStats(statsData);
     } catch (error) {
       console.error('Error loading data:', error);
@@ -53,9 +75,9 @@ function Home({ onLogout }) {
     setShowModal(true);
   };
 
-  const handleEditSong = (song) => {
-    setEditingSong(song);
-    setShowModal(true);
+  const handleViewSong = (song) => {
+    setViewingSong(song);
+    setShowViewModal(true);
   };
 
   const handleDeleteSong = async (songId) => {
@@ -70,19 +92,33 @@ function Home({ onLogout }) {
     }
   };
 
-  const handleRecreateSong = async (songId) => {
-    if (window.confirm('This will regenerate the song. Continue?')) {
-      try {
-        await recreateSong(songId);
-        loadData();
-        alert('Song submitted for regeneration!');
-      } catch (error) {
-        console.error('Error recreating song:', error);
-        // Extract the error message from the response
-        const errorMessage = error.response?.data?.error || error.message || 'Failed to recreate song';
-        alert(errorMessage);
-      }
-    }
+  const handleDuplicateSong = (song) => {
+    // Close view modal if open
+    setShowViewModal(false);
+    setViewingSong(null);
+
+    // Create a copy of the song without id, status, timestamps, and URLs
+    const duplicatedSong = {
+      specific_title: song.specific_title,
+      specific_lyrics: song.specific_lyrics,
+      prompt_to_generate: song.prompt_to_generate,
+      style_id: song.style?.id || song.style_id,
+      vocal_gender: song.vocal_gender,
+    };
+
+    // Open the modal in "create" mode with the duplicated data
+    setEditingSong(duplicatedSong);
+    setShowModal(true);
+  };
+
+  const handleEditSong = (song) => {
+    // Close view modal if open
+    setShowViewModal(false);
+    setViewingSong(null);
+
+    // Open the modal in "edit" mode with the full song data
+    setEditingSong(song);
+    setShowModal(true);
   };
 
   const handleModalClose = (shouldRefresh) => {
@@ -107,6 +143,8 @@ function Home({ onLogout }) {
         return stats.submitted || 0;
       case 'completed':
         return stats.completed || 0;
+      case 'failed':
+        return stats.failed || 0;
       default:
         return 0;
     }
@@ -115,13 +153,13 @@ function Home({ onLogout }) {
   return (
     <div className="app-container">
       <header className="header">
-        <h1>Song Management App</h1>
+        <h1>AIA Music Lab</h1>
         <div className="header-nav">
           <button className="nav-button primary" onClick={handleAddSong}>
-            Add New Song
+            + New Clip
           </button>
           <button className="nav-button secondary" onClick={() => navigate('/styles')}>
-            Manage Styles
+            Voices
           </button>
           <button className="nav-button logout" onClick={onLogout}>
             Logout
@@ -133,77 +171,37 @@ function Home({ onLogout }) {
         <div className="hero-banner"></div>
 
         <div className="section-header">
-          <span className="badge primary">Song Management</span>
-          <span className="badge secondary">{songs.length} tracks</span>
+          <span className="badge primary">Voice Clip Management</span>
+          <span className="badge secondary">{songs.length} clips</span>
         </div>
 
         <p className="section-description">
-          Search, filter, and manage your songs. Use the controls below to refine by status, style, or vocal gender.
+          Search, filter, and manage your voice clips. Use the controls below to refine by voice or style.
         </p>
-
-        <div className="status-tabs">
-          <button
-            className={`status-tab ${filters.status === 'all' ? 'active' : ''}`}
-            onClick={() => handleFilterChange('status', 'all')}
-          >
-            All ({getStatusCount('all')})
-          </button>
-          <button
-            className={`status-tab ${filters.status === 'create' ? 'active' : ''}`}
-            onClick={() => handleFilterChange('status', 'create')}
-          >
-            Create ({getStatusCount('create')})
-          </button>
-          <button
-            className={`status-tab ${filters.status === 'submitted' ? 'active' : ''}`}
-            onClick={() => handleFilterChange('status', 'submitted')}
-          >
-            Submitted ({getStatusCount('submitted')})
-          </button>
-          <button
-            className={`status-tab ${filters.status === 'completed' ? 'active' : ''}`}
-            onClick={() => handleFilterChange('status', 'completed')}
-          >
-            Completed ({getStatusCount('completed')})
-          </button>
-        </div>
 
         <div className="filters-row">
           <div className="filter-group">
             <label>Search</label>
             <input
               type="text"
-              placeholder="Find by title, lyrics, or style"
+              placeholder="Search clips..."
               value={filters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
             />
           </div>
 
           <div className="filter-group">
-            <label>Style</label>
+            <label>Voice</label>
             <select
-              value={filters.style_id}
-              onChange={(e) => handleFilterChange('style_id', e.target.value)}
+              value={filters.voice_name}
+              onChange={(e) => handleFilterChange('voice_name', e.target.value)}
             >
-              <option value="">All styles</option>
-              {styles.map((style) => (
-                <option key={style.id} value={style.id}>
-                  {style.name}
+              <option value="">All Voices</option>
+              {AZURE_VOICES.map((voice) => (
+                <option key={voice.id} value={voice.id}>
+                  {voice.name}
                 </option>
               ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Vocal Gender</label>
-            <select
-              value={filters.vocal_gender}
-              onChange={(e) => handleFilterChange('vocal_gender', e.target.value)}
-            >
-              <option value="all">All vocal genders</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
             </select>
           </div>
 
@@ -214,18 +212,18 @@ function Home({ onLogout }) {
                 checked={filters.all_users}
                 onChange={(e) => handleFilterChange('all_users', e.target.checked)}
               />
-              Show all team songs
+              Show all users' clips
             </label>
           </div>
         </div>
 
         {loading ? (
-          <div className="loading">Loading songs...</div>
+          <div className="loading">Loading voice clips...</div>
         ) : songs.length === 0 ? (
           <div className="empty-state">
-            <p>No songs found. Create your first song to get started!</p>
+            <p>Create your first voice clip</p>
             <button className="btn btn-primary" onClick={handleAddSong}>
-              Add New Song
+              Create New Voice Clip
             </button>
           </div>
         ) : (
@@ -234,9 +232,9 @@ function Home({ onLogout }) {
               <SongCard
                 key={song.id}
                 song={song}
-                onEdit={handleEditSong}
+                onView={handleViewSong}
                 onDelete={handleDeleteSong}
-                onRecreate={handleRecreateSong}
+                onDuplicate={handleDuplicateSong}
               />
             ))}
           </div>
@@ -246,8 +244,20 @@ function Home({ onLogout }) {
       {showModal && (
         <SongModal
           song={editingSong}
-          styles={styles}
+          songs={songs}
           onClose={handleModalClose}
+        />
+      )}
+
+      {showViewModal && (
+        <SongViewModal
+          song={viewingSong}
+          onClose={() => {
+            setShowViewModal(false);
+            setViewingSong(null);
+          }}
+          onDuplicate={handleDuplicateSong}
+          onEdit={handleEditSong}
         />
       )}
     </div>

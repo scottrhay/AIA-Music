@@ -1,0 +1,73 @@
+@import '../theme/theme.css';
+
+.star-rating {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.star-rating__star {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--color-neutral-300);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.star-rating__star:hover:not(:disabled) {
+  transform: scale(1.1);
+}
+
+.star-rating__star--filled {
+  color: #FFC107;
+}
+
+.star-rating--readonly .star-rating__star {
+  cursor: default;
+}
+
+.star-rating--readonly .star-rating__star:hover {
+  transform: none;
+}
+
+/* Size variants */
+.star-rating--small .star-rating__star {
+  width: 14px;
+  height: 14px;
+}
+
+.star-rating--medium .star-rating__star {
+  width: 18px;
+  height: 18px;
+}
+
+.star-rating--large .star-rating__star {
+  width: 24px;
+  height: 24px;
+}
+
+/* Animation */
+.star-rating__star:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+  .star-rating--small .star-rating__star {
+    width: 12px;
+    height: 12px;
+  }
+
+  .star-rating--medium .star-rating__star {
+    width: 16px;
+    height: 16px;
+  }
+
+  .star-rating--large .star-rating__star {
+    width: 20px;
+    height: 20px;
+  }
+}

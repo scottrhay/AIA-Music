@@ -1,17 +1,17 @@
-# 🎵 Welcome to SunoApp!
+# 🎵 Welcome to AIASpeech!
 
 Your complete music creation management platform is ready to deploy!
 
-## What is SunoApp?
+## What is AIASpeech?
 
-SunoApp is a modern web application that replaces your Excel-based music workflow with a professional, database-driven platform. It integrates seamlessly with your existing n8n and Suno API setup.
+AIASpeech is a modern web application that replaces your Excel-based music workflow with a professional, database-driven platform. It integrates seamlessly with your existing n8n and Azure Speech API setup.
 
 ## 📋 Quick Start (Choose Your Path)
 
 ### Path 1: I Want to Deploy NOW (30 minutes)
 👉 **Open:** `DEPLOYMENT_CHECKLIST.md`
 
-This checklist walks you through every step to get your app live at https://suno.aiacopilot.com
+This checklist walks you through every step to get your app live at https://speech.aiacopilot.com
 
 ### Path 2: I Want to Understand First (5 minutes)
 👉 **Read:** `PROJECT_SUMMARY.md`
@@ -57,12 +57,12 @@ Complete installation guide with troubleshooting and explanations.
 
 After deployment, you'll have:
 
-✅ A beautiful web app at **https://suno.aiacopilot.com**
+✅ A beautiful web app at **https://speech.aiacopilot.com**
 ✅ Secure user authentication
 ✅ Song management (create, edit, delete, search, filter)
 ✅ Style library management
 ✅ Team collaboration
-✅ Automatic Suno API integration via n8n
+✅ Automatic Azure Speech API integration via n8n
 ✅ Download tracking for generated music
 ✅ Mobile-friendly interface
 ✅ SSL/HTTPS security
@@ -72,7 +72,7 @@ After deployment, you'll have:
 
 **$0 per month**
 
-You're already paying for your VPS and domain, so SunoApp costs nothing extra!
+You're already paying for your VPS and domain, so AIASpeech costs nothing extra!
 
 ## 🏗️ What Was Built
 
@@ -145,13 +145,13 @@ Everything you need to know is in the documentation:
 4. **Bookmark useful commands:**
    ```bash
    # Restart app
-   sudo systemctl restart sunoapp
+   sudo systemctl restart aiaspeech
 
    # View logs
-   sudo journalctl -u sunoapp -f
+   sudo journalctl -u aiaspeech -f
 
    # Access database
-   mysql -u sunoapp_user -p sunoapp_db
+   mysql -u aiaspeech_user -p aiaspeech_db
    ```
 
 ## 🎉 Ready?

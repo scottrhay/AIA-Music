@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22d3ee"/>
+      <stop offset="50%" style="stop-color:#06b6d4"/>
+      <stop offset="100%" style="stop-color:#0891b2"/>
+    </linearGradient>
+  </defs>
+  <!-- Background with rounded corners for maskable icon -->
+  <rect width="512" height="512" fill="url(#bg-grad)" rx="96"/>
+  <!-- Music notes centered in safe zone -->
+  <g fill="white" transform="translate(96, 96) scale(0.625)">
+    <ellipse cx="160" cy="352" rx="64" ry="48"/>
+    <ellipse cx="352" cy="320" rx="64" ry="48"/>
+    <rect x="208" y="112" width="32" height="240"/>
+    <rect x="400" y="80" width="32" height="240"/>
+    <rect x="208" y="80" width="224" height="32"/>
+    <path d="M208 112 L432 80 L432 144 L208 176 Z"/>
+  </g>
+</svg>

@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getToken, removeToken } from './auth';
 
 // Force HTTPS API URL - v2.0
-const API_URL = process.env.REACT_APP_API_URL || 'https://suno.aiacopilot.com/api/v1';
+const API_URL = process.env.REACT_APP_API_URL || '/api/v1';
 
 const api = axios.create({
   baseURL: API_URL,

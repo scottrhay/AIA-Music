@@ -1,10 +1,10 @@
-# SunoApp Makefile
+# AIASpeech Makefile
 # Convenient commands for Docker deployment
 
 .PHONY: help build up down restart logs clean status shell
 
 help:
-	@echo "SunoApp Docker Commands"
+	@echo "AIASpeech Docker Commands"
 	@echo ""
 	@echo "  make build         - Build Docker images"
 	@echo "  make up            - Start containers"
@@ -35,7 +35,7 @@ logs:
 	docker-compose logs -f
 
 logs-app:
-	docker-compose logs -f sunoapp
+	docker-compose logs -f aiaspeech
 
 logs-nginx:
 	docker-compose logs -f nginx
@@ -44,7 +44,7 @@ status:
 	docker-compose ps
 
 shell:
-	docker-compose exec sunoapp sh
+	docker-compose exec aiaspeech sh
 
 clean:
 	docker-compose down -v

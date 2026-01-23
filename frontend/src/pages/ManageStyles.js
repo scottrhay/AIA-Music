@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import TopBar from '../components/Studio/TopBar';
 import { getStyles, createStyle, updateStyle, deleteStyle } from '../services/styles';
-import StyleModal from '../components/StyleModal';
+import '../theme/theme.css';
 import './ManageStyles.css';
 
 function ManageStyles({ onLogout }) {
   const navigate = useNavigate();
   const [styles, setStyles] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [editingStyle, setEditingStyle] = useState(null);
   const [selectedStyle, setSelectedStyle] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    style_prompt: ''
+  });
 
   useEffect(() => {
     loadStyles();
@@ -20,201 +27,251 @@ function ManageStyles({ onLogout }) {
     try {
       setLoading(true);
       const data = await getStyles();
-      setStyles(data.styles);
-      if (data.styles.length > 0 && !selectedStyle) {
+      setStyles(data.styles || []);
+      if (data.styles?.length > 0 && !selectedStyle) {
         setSelectedStyle(data.styles[0]);
       }
-    } catch (error) {
-      console.error('Error loading styles:', error);
+    } catch (err) {
+      setError('Failed to load styles');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddStyle = () => {
-    setEditingStyle(null);
-    setShowModal(true);
+  const handleSelectStyle = (style) => {
+    setSelectedStyle(style);
+    setIsEditing(false);
+    setIsCreating(false);
+    setError('');
   };
 
-  const handleEditStyle = (style) => {
-    setEditingStyle(style);
-    setShowModal(true);
+  const handleEdit = () => {
+    setFormData({
+      name: selectedStyle.name,
+      style_prompt: selectedStyle.style_prompt || ''
+    });
+    setIsEditing(true);
+    setIsCreating(false);
   };
 
-  const handleDeleteStyle = async (styleId) => {
-    if (window.confirm('Are you sure you want to delete this style?')) {
-      try {
-        await deleteStyle(styleId);
-        if (selectedStyle?.id === styleId) {
-          setSelectedStyle(null);
-        }
-        loadStyles();
-      } catch (error) {
-        console.error('Error deleting style:', error);
-        alert(error.response?.data?.error || 'Failed to delete style');
-      }
+  const handleCreate = () => {
+    setFormData({ name: '', style_prompt: '' });
+    setIsCreating(true);
+    setIsEditing(false);
+    setSelectedStyle(null);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setIsCreating(false);
+    setError('');
+    if (styles.length > 0) {
+      setSelectedStyle(styles[0]);
     }
   };
 
-  const handleModalClose = (shouldRefresh) => {
-    setShowModal(false);
-    setEditingStyle(null);
-    if (shouldRefresh) {
-      loadStyles();
+  const handleSave = async () => {
+    if (!formData.name.trim()) {
+      setError('Style name is required');
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+
+    try {
+      if (isCreating) {
+        const result = await createStyle(formData);
+        setStyles([...styles, result.style]);
+        setSelectedStyle(result.style);
+      } else {
+        const result = await updateStyle(selectedStyle.id, formData);
+        setStyles(styles.map(s => s.id === selectedStyle.id ? result.style : s));
+        setSelectedStyle(result.style);
+      }
+      setIsEditing(false);
+      setIsCreating(false);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to save style');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm(`Delete style "${selectedStyle.name}"? This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await deleteStyle(selectedStyle.id);
+      const newStyles = styles.filter(s => s.id !== selectedStyle.id);
+      setStyles(newStyles);
+      setSelectedStyle(newStyles.length > 0 ? newStyles[0] : null);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete style');
     }
   };
 
   return (
-    <div className="app-container">
-      <header className="header">
-        <h1>Song Management App</h1>
-        <div className="header-nav">
-          <button className="nav-button primary" onClick={() => navigate('/')}>
-            Home
-          </button>
-          <button className="nav-button secondary" onClick={handleAddStyle}>
-            Add New Style
-          </button>
-          <button className="nav-button logout" onClick={onLogout}>
-            Logout
-          </button>
-        </div>
-      </header>
+    <div className="manage-styles">
+      <TopBar
+        onAddSong={handleCreate}
+        onManageStyles={null}
+        onManageSongs={() => navigate('/')}
+        onLogout={onLogout}
+        primaryButtonText="New Style"
+        primaryButtonIcon="palette"
+      />
 
-      <main className="main-content">
+      <main className="manage-styles__content">
         <div className="section-header">
-          <span className="badge primary">Style Management</span>
-          <span className="badge secondary">{styles.length} styles</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-3)' }}>
+            <span className="badge primary">Music Styles</span>
+            <span className="badge secondary">{styles.length} styles</span>
+          </div>
         </div>
 
         <p className="section-description">
-          Manage your music styles. Create, edit, and organize style templates for song generation.
+          Create and manage music styles for your songs. Each style defines the genre, mood, and musical characteristics that Suno will use when generating music.
         </p>
 
-        {loading ? (
-          <div className="loading">Loading styles...</div>
-        ) : styles.length === 0 ? (
-          <div className="empty-state">
-            <p>No styles found. Create your first style to get started!</p>
-            <button className="btn btn-primary" onClick={handleAddStyle}>
-              Add New Style
-            </button>
-          </div>
-        ) : (
-          <div className="styles-layout">
-            <div className="styles-sidebar">
-              <h3>Styles</h3>
+        {error && <div className="alert alert-error">{error}</div>}
+
+        <div className="styles-layout">
+          <div className="styles-sidebar">
+            <h3>Available Styles</h3>
+            {loading ? (
+              <div className="loading">Loading...</div>
+            ) : (
               <div className="styles-list">
                 {styles.map((style) => (
                   <div
                     key={style.id}
                     className={`style-item ${selectedStyle?.id === style.id ? 'active' : ''}`}
-                    onClick={() => setSelectedStyle(style)}
+                    onClick={() => handleSelectStyle(style)}
                   >
                     <div className="style-item-name">{style.name}</div>
-                    <div className="style-item-actions">
-                      <button
-                        className="icon-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditStyle(style);
-                        }}
-                        title="Edit"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        className="icon-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteStyle(style.id);
-                        }}
-                        title="Delete"
-                      >
-                        🗑️
-                      </button>
+                    <div className="style-item-meta">
+                      {style.style_prompt ? `${style.style_prompt.substring(0, 40)}...` : 'No prompt'}
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            )}
+          </div>
 
-            <div className="style-details">
-              {selectedStyle ? (
-                <>
-                  <div className="details-header">
-                    <h2>{selectedStyle.name}</h2>
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => handleEditStyle(selectedStyle)}
-                    >
-                      Edit Style
+          <div className="style-details">
+            {isCreating ? (
+              <>
+                <div className="details-header">
+                  <h2>Create New Style</h2>
+                </div>
+                <div className="details-content">
+                  <div className="detail-section">
+                    <label>Style Name</label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="e.g., Upbeat Pop, Chill Acoustic, Epic Cinematic"
+                      style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}
+                    />
+                  </div>
+                  <div className="detail-section">
+                    <label>Style Prompt</label>
+                    <textarea
+                      value={formData.style_prompt}
+                      onChange={(e) => setFormData({ ...formData, style_prompt: e.target.value })}
+                      rows="6"
+                      placeholder="Describe the musical style, genre, instruments, mood, tempo, etc. Example: 'Genre: upbeat pop with electronic elements. Mood: energetic and positive. Instruments: synths, drums, bass guitar. Tempo: 120 BPM'"
+                      style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)', resize: 'vertical' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                    <button className="btn btn-secondary" onClick={handleCancel} disabled={saving}>
+                      Cancel
+                    </button>
+                    <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+                      {saving ? 'Creating...' : 'Create Style'}
                     </button>
                   </div>
-
-                  <div className="details-content">
-                    {selectedStyle.genre && (
-                      <div className="detail-section">
-                        <h4>Genre</h4>
-                        <p>{selectedStyle.genre}</p>
-                      </div>
-                    )}
-
-                    {selectedStyle.beat && (
-                      <div className="detail-section">
-                        <h4>Beat</h4>
-                        <p>{selectedStyle.beat}</p>
-                      </div>
-                    )}
-
-                    {selectedStyle.mood && (
-                      <div className="detail-section">
-                        <h4>Mood</h4>
-                        <p>{selectedStyle.mood}</p>
-                      </div>
-                    )}
-
-                    {selectedStyle.vocals && (
-                      <div className="detail-section">
-                        <h4>Vocals</h4>
-                        <p>{selectedStyle.vocals}</p>
-                      </div>
-                    )}
-
-                    {selectedStyle.instrumentation && (
-                      <div className="detail-section">
-                        <h4>Instrumentation</h4>
-                        <p>{selectedStyle.instrumentation}</p>
-                      </div>
-                    )}
-
-                    {selectedStyle.style_description && (
-                      <div className="detail-section">
-                        <h4>Style Description</h4>
-                        <p>{selectedStyle.style_description}</p>
-                      </div>
-                    )}
-
-                    {selectedStyle.created_by && (
-                      <div className="detail-section meta">
-                        <small>Created by: {selectedStyle.created_by}</small>
-                      </div>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <div className="no-selection">
-                  <p>Select a style to view details</p>
                 </div>
-              )}
-            </div>
+              </>
+            ) : isEditing ? (
+              <>
+                <div className="details-header">
+                  <h2>Edit Style</h2>
+                </div>
+                <div className="details-content">
+                  <div className="detail-section">
+                    <label>Style Name</label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}
+                    />
+                  </div>
+                  <div className="detail-section">
+                    <label>Style Prompt</label>
+                    <textarea
+                      value={formData.style_prompt}
+                      onChange={(e) => setFormData({ ...formData, style_prompt: e.target.value })}
+                      rows="6"
+                      style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)', resize: 'vertical' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button className="btn btn-secondary" onClick={handleCancel} disabled={saving}>
+                        Cancel
+                      </button>
+                      <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+                        {saving ? 'Saving...' : 'Save Changes'}
+                      </button>
+                    </div>
+                    <button className="btn btn-danger" onClick={handleDelete} disabled={saving}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : selectedStyle ? (
+              <>
+                <div className="details-header">
+                  <h2>{selectedStyle.name}</h2>
+                  <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
+                    <button className="btn btn-secondary" onClick={handleEdit}>
+                      Edit
+                    </button>
+                    <button className="btn btn-danger" onClick={handleDelete}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+                <div className="details-content">
+                  <div className="detail-section">
+                    <h4>Style Prompt</h4>
+                    <p style={{ whiteSpace: 'pre-wrap', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '6px' }}>
+                      {selectedStyle.style_prompt || 'No style prompt defined'}
+                    </p>
+                  </div>
+                  <div className="detail-section">
+                    <h4>Details</h4>
+                    <p><strong>Created by:</strong> {selectedStyle.created_by || 'Unknown'}</p>
+                    <p><strong>Created:</strong> {selectedStyle.created_at ? new Date(selectedStyle.created_at).toLocaleDateString() : 'Unknown'}</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="no-selection">
+                <p>Select a style to view details, or create a new one</p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </main>
-
-      {showModal && (
-        <StyleModal style={editingStyle} onClose={handleModalClose} />
-      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
-# SunoApp API Documentation
+# AIASpeech API Documentation
 
-Base URL: `https://suno.aiacopilot.com/api/v1`
+Base URL: `https://speech.aiacopilot.com/api/v1`
 
 ## Authentication
 
@@ -203,42 +203,42 @@ Note: Cannot delete styles that are being used by songs.
 
 ### Webhooks (for n8n)
 
-#### Suno Callback
+#### Azure Speech Callback
 
-**POST** `/webhooks/suno-callback`
+**POST** `/webhooks/azure-callback`
 
-Called by n8n when Suno completes song generation.
+Called by n8n when Azure Speech completes song generation.
 
 Request:
 ```json
 {
-  "task_id": "suno-task-id-xyz",
+  "task_id": "azure-task-id-xyz",
   "status": "completed",
   "msg": "All generated successfully.",
   "data": [
     {
-      "audio_url": "https://cdn.suno.ai/...",
+      "audio_url": "https://cdn.azure.speech/...",
       "title": "Generated Title 1"
     },
     {
-      "audio_url": "https://cdn.suno.ai/...",
+      "audio_url": "https://cdn.azure.speech/...",
       "title": "Generated Title 2"
     }
   ]
 }
 ```
 
-#### Suno Submitted
+#### Azure Speech Submitted
 
-**POST** `/webhooks/suno-submitted`
+**POST** `/webhooks/azure-submitted`
 
-Called by n8n after successfully submitting to Suno API.
+Called by n8n after successfully submitting to Azure Speech API.
 
 Request:
 ```json
 {
   "song_id": 123,
-  "task_id": "suno-task-id-xyz"
+  "task_id": "azure-task-id-xyz"
 }
 ```
 
@@ -256,7 +256,7 @@ Response:
 ```json
 {
   "status": "healthy",
-  "service": "SunoApp API"
+  "service": "AIASpeech API"
 }
 ```
 
@@ -287,22 +287,22 @@ Currently no rate limiting is implemented. May be added in future versions.
 ## CORS
 
 Allowed origins:
-- `https://suno.aiacopilot.com`
+- `https://speech.aiacopilot.com`
 - `http://localhost:3000` (development)
 
 ## Examples
 
-### Create a Song and Submit to Suno
+### Create a Song and Submit to Azure Speech
 
 ```bash
 # 1. Login
-TOKEN=$(curl -X POST https://suno.aiacopilot.com/api/v1/auth/login \
+TOKEN=$(curl -X POST https://speech.aiacopilot.com/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"admin123"}' \
   | jq -r '.access_token')
 
 # 2. Create song
-curl -X POST https://suno.aiacopilot.com/api/v1/songs \
+curl -X POST https://speech.aiacopilot.com/api/v1/songs \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{
@@ -313,20 +313,20 @@ curl -X POST https://suno.aiacopilot.com/api/v1/songs \
     "status": "create"
   }'
 
-# 3. n8n will pick it up automatically and submit to Suno
+# 3. n8n will pick it up automatically and submit to Azure Speech
 # 4. Webhook will update status to "completed" with download URLs
 ```
 
 ### Search for Completed Songs
 
 ```bash
-curl -X GET "https://suno.aiacopilot.com/api/v1/songs?status=completed&search=prayer" \
+curl -X GET "https://speech.aiacopilot.com/api/v1/songs?status=completed&search=prayer" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Get Song Statistics
 
 ```bash
-curl -X GET "https://suno.aiacopilot.com/api/v1/songs/stats?all_users=true" \
+curl -X GET "https://speech.aiacopilot.com/api/v1/songs/stats?all_users=true" \
   -H "Authorization: Bearer $TOKEN"
 ```

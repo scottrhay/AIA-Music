@@ -1,63 +1,44 @@
-# Python
+# Dependencies
+node_modules/
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-ENV/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+*.pyc
 
-# Flask
-instance/
-.webassets-cache
-
-# Environment variables
+# Environment
 .env
 .env.local
 
-# IDEs
+# Build artifacts
+frontend/build/
+*.tar.gz
+*.zip
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
-
-# OS
 .DS_Store
-Thumbs.db
-
-# Node
-node_modules/
-npm-debug.log
-yarn-error.log
-
-# React build
-frontend/build/
-frontend/.env.local
 
 # Database
 *.db
-*.sqlite3
+*.sqlite
 
-# Logs
-*.log
-logs/
+# Deployment archives (these should not be in version control)
+aiamusic-latest.tar.gz
+backend-*.tar.gz
+backend-autodownload.tar.gz
+backend-models-fix.tar.gz
+backend-stats-fix.tar.gz
+backend-styles-duplicate-fix.tar.gz
+backend-styles-fix.tar.gz
+backend-vocal-gender-fix.tar.gz
+frontend/build.tar.gz
 
-# Uploads
-uploads/
+# Temporary files
+nul
+data/
+deploy/nginx/ssl/

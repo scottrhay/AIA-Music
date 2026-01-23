@@ -1,11 +1,50 @@
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from datetime import datetime
 from app import db
-from app.models import Song, Style
+from app.models import Song, Style, Playlist, playlist_songs
+from app.services.audio_storage import get_storage_service
 import requests
 import os
 
 bp = Blueprint('songs', __name__)
+
+
+def _archive_song_to_storage(song):
+    """Archive song audio files to local storage."""
+    storage = get_storage_service()
+
+    if not storage.is_configured():
+        current_app.logger.warning("Local storage not configured, skipping archive")
+        return False
+
+    if song.is_archived:
+        current_app.logger.info(f"Song {song.id} already archived")
+        return True
+
+    try:
+        result = storage.archive_song_tracks(
+            song.id,
+            song.download_url_1,
+            song.download_url_2
+        )
+
+        if result['local_url_1'] or result['local_url_2']:
+            song.archived_url_1 = result['local_url_1']
+            song.archived_url_2 = result['local_url_2']
+            song.is_archived = True
+            song.archived_at = datetime.utcnow()
+            song.file_size_bytes = result['total_size']
+            db.session.commit()
+            current_app.logger.info(f"Song {song.id} archived locally: {result}")
+            return True
+        else:
+            current_app.logger.warning(f"No tracks archived for song {song.id}")
+            return False
+
+    except Exception as e:
+        current_app.logger.error(f"Failed to archive song {song.id}: {e}")
+        return False
 
 
 def _submit_to_suno(song):
@@ -16,26 +55,43 @@ def _submit_to_suno(song):
     if not suno_api_key:
         raise Exception('Suno API key is not configured. Please contact the administrator to set up SUNO_API_KEY.')
 
-    # Determine if using custom mode (has prompt) or lyrics mode
-    custom_mode = not song.prompt_to_generate or song.prompt_to_generate.strip() == ''
+    # Determine if using custom mode
+    # customMode: true means user provides style, title, and lyrics separately
+    # customMode: false means user provides only a prompt and AI generates everything
+    custom_mode = bool(song.specific_lyrics and song.specific_lyrics.strip())
 
     # Build Suno API request
     payload = {
         'customMode': custom_mode,
         'instrumental': False,
-        'prompt': song.prompt_to_generate if song.prompt_to_generate else song.specific_lyrics,
-        'model': 'chirp-v3-5',
-        'title': song.specific_title or 'Untitled Song',
-        'styleWeight': 1,
-        'vocalGender': 'f' if song.vocal_gender == 'female' else 'm',
-        'callBackUrl': f"{os.getenv('APP_URL', 'https://suno.aiacopilot.com')}/api/v1/webhooks/suno-callback"
+        'model': 'V5',
+        'callBackUrl': f"{os.getenv('APP_URL', 'https://music.aiacopilot.com')}/api/v1/webhooks/suno-callback"
     }
 
-    # Add style if available
-    if song.style and song.style.style_prompt:
-        payload['style'] = song.style.style_prompt
+    if custom_mode:
+        # Custom mode: provide lyrics, title, and style
+        payload['prompt'] = song.specific_lyrics
+        payload['title'] = song.specific_title or 'Untitled Song'
     else:
-        payload['style'] = 'pop'
+        # Simple mode: just provide a prompt
+        payload['prompt'] = song.prompt_to_generate or song.specific_title or 'Create a song'
+
+    # Add optional fields
+    if song.vocal_gender:
+        payload['vocalGender'] = song.vocal_gender  # Should be 'male' or 'female'
+
+    payload['styleWeight'] = 1
+
+    # Add style if available - explicitly load style by ID if not already loaded
+    style_prompt = None
+    if song.style_id:
+        # Explicitly query the style to ensure it's loaded
+        style = Style.query.get(song.style_id)
+        if style and style.style_prompt:
+            style_prompt = style.style_prompt
+            current_app.logger.info(f"Using style '{style.name}' with prompt: {style_prompt}")
+
+    payload['style'] = style_prompt if style_prompt else 'pop'
 
     headers = {
         'Authorization': f'Bearer {suno_api_key}',
@@ -73,8 +129,13 @@ def _submit_to_suno(song):
 
         # Check for error in response body
         if result and isinstance(result, dict):
+            # Check for error code (some APIs return code instead of status)
+            if result.get('code') and result.get('code') >= 400:
+                error_msg = result.get('msg') or result.get('message') or result.get('error') or 'Unknown error from Suno API'
+                raise Exception(f'Suno API error: {error_msg}')
+
             if result.get('error') or result.get('status') == 'error':
-                error_msg = result.get('message') or result.get('error') or 'Unknown error from Suno API'
+                error_msg = result.get('message') or result.get('msg') or result.get('error') or 'Unknown error from Suno API'
                 raise Exception(f'Suno API error: {error_msg}')
 
         # Update song with Suno task ID and set status to submitted
@@ -82,20 +143,28 @@ def _submit_to_suno(song):
         task_id = None
 
         if result and isinstance(result, dict):
-            # Try different possible response structures
-            task_id = result.get('task_id') or result.get('taskId')
+            # Check if it's nested in a data object (standard Suno API response)
+            task_data = result.get('data', {})
+            if isinstance(task_data, dict):
+                task_id = task_data.get('taskId') or task_data.get('task_id')
 
-            # Also check if it's nested in a data object
+            # Also try top-level fields as fallback
             if not task_id:
-                task_data = result.get('data', {})
-                if isinstance(task_data, dict):
-                    task_id = task_data.get('task_id') or task_data.get('taskId')
+                task_id = (result.get('taskId') or result.get('task_id') or
+                          result.get('id') or result.get('ID'))
+
+            # Some APIs return data as array
+            if not task_id and isinstance(task_data, list) and len(task_data) > 0:
+                first_item = task_data[0]
+                if isinstance(first_item, dict):
+                    task_id = (first_item.get('taskId') or first_item.get('task_id') or
+                              first_item.get('id') or first_item.get('ID'))
 
         if task_id:
             song.suno_task_id = task_id
             current_app.logger.info(f"Stored Suno task_id: {task_id} for song {song.id}")
         else:
-            current_app.logger.warning(f"No task_id found in Suno API response for song {song.id}")
+            current_app.logger.warning(f"No task_id found in Suno API response for song {song.id}. Full response: {result}")
             raise Exception('Suno API did not return a task ID. The request may have failed. Please try again.')
 
         song.status = 'submitted'
@@ -124,6 +193,7 @@ def get_songs():
     style_id = request.args.get('style_id')
     vocal_gender = request.args.get('vocal_gender')
     search = request.args.get('search')
+    playlist_id = request.args.get('playlist_id')
     show_all_users = request.args.get('all_users', 'false').lower() == 'true'
 
     # Build query
@@ -143,6 +213,10 @@ def get_songs():
     if vocal_gender and vocal_gender != 'all':
         query = query.filter_by(vocal_gender=vocal_gender)
 
+    # Filter by playlist
+    if playlist_id:
+        query = query.join(playlist_songs).filter(playlist_songs.c.playlist_id == int(playlist_id))
+
     # Apply search
     if search:
         search_pattern = f'%{search}%'
@@ -159,7 +233,7 @@ def get_songs():
     songs = query.all()
 
     return jsonify({
-        'songs': [song.to_dict(include_user=show_all_users, include_style=True) for song in songs],
+        'songs': [song.to_dict(include_user=show_all_users, include_style=True, include_playlists=True) for song in songs],
         'total': len(songs)
     }), 200
 
@@ -189,14 +263,19 @@ def create_song():
         if not style:
             return jsonify({'error': 'Style not found'}), 404
 
-    # Create song
+    # Create song - default vocal_gender to 'male' if not provided
+    vocal_gender = data.get('vocal_gender')
+    if not vocal_gender or vocal_gender not in ('male', 'female'):
+        vocal_gender = 'male'
+
     song = Song(
         user_id=user_id,
         specific_title=data.get('specific_title'),
+        version=data.get('version', 'v1'),
         specific_lyrics=data.get('specific_lyrics'),
         prompt_to_generate=data.get('prompt_to_generate'),
         style_id=data.get('style_id'),
-        vocal_gender=data.get('vocal_gender'),
+        vocal_gender=vocal_gender,
         status=data.get('status', 'create')
     )
 
@@ -256,9 +335,20 @@ def update_song(song_id):
     if 'style_id' in data:
         song.style_id = data['style_id']
     if 'vocal_gender' in data:
-        song.vocal_gender = data['vocal_gender']
+        vocal_gender = data['vocal_gender']
+        song.vocal_gender = vocal_gender if vocal_gender in ('male', 'female') else 'male'
     if 'status' in data:
         song.status = data['status']
+    if 'star_rating' in data:
+        # Validate star_rating is between 0 and 5
+        rating = data['star_rating']
+        if not isinstance(rating, int) or rating < 0 or rating > 5:
+            return jsonify({'error': 'Star rating must be between 0 and 5'}), 400
+        song.star_rating = rating
+    if 'downloaded_url_1' in data:
+        song.downloaded_url_1 = bool(data['downloaded_url_1'])
+    if 'downloaded_url_2' in data:
+        song.downloaded_url_2 = bool(data['downloaded_url_2'])
 
     try:
         db.session.commit()
@@ -325,6 +415,11 @@ def delete_song(song_id):
         return jsonify({'error': 'Unauthorized to delete this song'}), 403
 
     try:
+        # Delete Azure Blob files if archived
+        if song.is_archived:
+            storage = get_storage_service()
+            storage.delete_song_files(song_id)
+
         db.session.delete(song)
         db.session.commit()
         return jsonify({'message': 'Song deleted successfully'}), 200
@@ -343,12 +438,364 @@ def get_stats():
     # Build base query
     base_query = Song.query if show_all_users else Song.query.filter_by(user_id=user_id)
 
+    # Count completed songs that actually have audio files
+    completed_with_audio = base_query.filter(
+        Song.status == 'completed',
+        db.or_(Song.download_url_1.isnot(None), Song.download_url_2.isnot(None))
+    ).count()
+
     stats = {
         'total': base_query.count(),
         'create': base_query.filter_by(status='create').count(),
         'submitted': base_query.filter_by(status='submitted').count(),
-        'completed': base_query.filter_by(status='completed').count(),
+        'completed': completed_with_audio,
+        'failed': base_query.filter_by(status='failed').count(),
         'unspecified': base_query.filter_by(status='unspecified').count()
     }
 
     return jsonify(stats), 200
+
+
+def _check_suno_status(song):
+    """Check the status of a song generation task with Suno API."""
+    suno_api_key = os.getenv('SUNO_API_KEY')
+
+    if not suno_api_key:
+        raise Exception('Suno API key is not configured')
+
+    if not song.suno_task_id:
+        raise Exception('No task ID for this song')
+
+    # Suno API endpoint for checking status
+    status_url = f"https://api.sunoapi.org/api/v1/generate/record-info?taskId={song.suno_task_id}"
+
+    headers = {
+        'Authorization': f'Bearer {suno_api_key}',
+        'Content-Type': 'application/json'
+    }
+
+    try:
+        response = requests.get(status_url, headers=headers, timeout=30)
+        response.raise_for_status()
+        result = response.json()
+
+        current_app.logger.info(f"Suno status check for song {song.id}: {result}")
+
+        if result.get('code') != 200:
+            error_msg = result.get('msg', 'Unknown error')
+            raise Exception(f'Suno API error: {error_msg}')
+
+        data = result.get('data', {})
+        status = data.get('status', '').upper()
+
+        if status == 'SUCCESS':
+            # Extract audio URLs from sunoData
+            response_data = data.get('response', {})
+            suno_data = response_data.get('sunoData', [])
+
+            if suno_data and len(suno_data) > 0:
+                # Get first track
+                if len(suno_data) >= 1:
+                    song.download_url_1 = suno_data[0].get('audioUrl')
+                # Get second track if available
+                if len(suno_data) >= 2:
+                    song.download_url_2 = suno_data[1].get('audioUrl')
+
+                song.status = 'completed'
+                db.session.commit()
+                current_app.logger.info(f"Song {song.id} completed with URLs: {song.download_url_1}, {song.download_url_2}")
+
+                # Auto-archive to Azure Blob Storage for permanent storage
+                _archive_song_to_storage(song)
+
+                return {'status': 'completed', 'song': song.to_dict()}
+            else:
+                current_app.logger.warning(f"Song {song.id} marked SUCCESS but no audio URLs found")
+                return {'status': 'pending', 'message': 'Waiting for audio URLs'}
+
+        elif status == 'FAILED':
+            error_msg = data.get('errorMessage', 'Generation failed')
+            song.status = 'failed'
+            db.session.commit()
+            current_app.logger.error(f"Song {song.id} failed: {error_msg}")
+            return {'status': 'failed', 'error': error_msg}
+
+        elif status in ['PENDING', 'PROCESSING', 'QUEUED']:
+            return {'status': 'pending', 'suno_status': status}
+
+        else:
+            return {'status': 'pending', 'suno_status': status or 'unknown'}
+
+    except requests.exceptions.RequestException as e:
+        current_app.logger.error(f"Error checking Suno status for song {song.id}: {str(e)}")
+        raise Exception(f'Failed to check status: {str(e)}')
+
+
+@bp.route('/<int:song_id>/check-status', methods=['POST'])
+@jwt_required()
+def check_song_status(song_id):
+    """Check the generation status of a submitted song."""
+    user_id = get_jwt_identity()
+    song = Song.query.get(song_id)
+
+    if not song:
+        return jsonify({'error': 'Song not found'}), 404
+
+    # Only check songs that are in submitted status
+    if song.status != 'submitted':
+        return jsonify({
+            'status': song.status,
+            'message': f'Song is not in submitted status (current: {song.status})'
+        }), 200
+
+    if not song.suno_task_id:
+        return jsonify({'error': 'No task ID for this song'}), 400
+
+    try:
+        result = _check_suno_status(song)
+        return jsonify(result), 200
+    except Exception as e:
+        current_app.logger.error(f"Error checking status for song {song_id}: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/check-submitted', methods=['POST'])
+@jwt_required()
+def check_all_submitted():
+    """Check status of all submitted songs for the current user."""
+    user_id = get_jwt_identity()
+
+    # Get all submitted songs for this user
+    submitted_songs = Song.query.filter_by(user_id=user_id, status='submitted').all()
+
+    if not submitted_songs:
+        return jsonify({
+            'message': 'No submitted songs to check',
+            'results': [],
+            'updated': 0,
+            'errors': 0,
+            'total_checked': 0
+        }), 200
+
+    results = []
+    updated_count = 0
+    error_count = 0
+
+    for song in submitted_songs:
+        if song.suno_task_id:
+            try:
+                result = _check_suno_status(song)
+                results.append({
+                    'song_id': song.id,
+                    'title': song.specific_title,
+                    **result
+                })
+                if result.get('status') == 'completed':
+                    updated_count += 1
+                elif result.get('status') == 'failed':
+                    error_count += 1
+            except Exception as e:
+                results.append({
+                    'song_id': song.id,
+                    'title': song.specific_title,
+                    'status': 'error',
+                    'error': str(e)
+                })
+                error_count += 1
+        else:
+            results.append({
+                'song_id': song.id,
+                'title': song.specific_title,
+                'status': 'error',
+                'error': 'No task ID'
+            })
+            error_count += 1
+
+    return jsonify({
+        'results': results,
+        'updated': updated_count,
+        'errors': error_count,
+        'total_checked': len(submitted_songs)
+    }), 200
+
+
+@bp.route('/<int:song_id>/archive', methods=['POST'])
+@jwt_required()
+def archive_song(song_id):
+    """Manually archive a song to Azure Blob Storage."""
+    user_id = get_jwt_identity()
+    song = Song.query.get(song_id)
+
+    if not song:
+        return jsonify({'error': 'Song not found'}), 404
+
+    # Check ownership
+    if song.user_id != user_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    # Check if song has audio to archive
+    if not song.download_url_1 and not song.download_url_2:
+        return jsonify({'error': 'Song has no audio files to archive'}), 400
+
+    if song.is_archived:
+        return jsonify({
+            'message': 'Song already archived',
+            'song': song.to_dict()
+        }), 200
+
+    storage = get_storage_service()
+    if not storage.is_configured():
+        return jsonify({'error': 'Audio storage not configured'}), 503
+
+    success = _archive_song_to_storage(song)
+
+    if success:
+        return jsonify({
+            'message': 'Song archived successfully',
+            'song': song.to_dict()
+        }), 200
+    else:
+        return jsonify({'error': 'Failed to archive song'}), 500
+
+
+@bp.route('/archive-all', methods=['POST'])
+@jwt_required()
+def archive_all_songs():
+    """Archive all completed songs that haven't been archived yet."""
+    user_id = get_jwt_identity()
+
+    storage = get_storage_service()
+    if not storage.is_configured():
+        return jsonify({'error': 'Audio storage not configured'}), 503
+
+    # Get all completed, unarchived songs for this user
+    songs = Song.query.filter(
+        Song.user_id == user_id,
+        Song.status == 'completed',
+        Song.is_archived == False,
+        db.or_(Song.download_url_1.isnot(None), Song.download_url_2.isnot(None))
+    ).all()
+
+    if not songs:
+        return jsonify({
+            'message': 'No songs to archive',
+            'archived': 0,
+            'failed': 0
+        }), 200
+
+    archived = 0
+    failed = 0
+
+    for song in songs:
+        if _archive_song_to_storage(song):
+            archived += 1
+        else:
+            failed += 1
+
+    return jsonify({
+        'message': f'Archived {archived} songs',
+        'archived': archived,
+        'failed': failed,
+        'total': len(songs)
+    }), 200
+
+
+@bp.route('/storage/stats', methods=['GET'])
+@jwt_required()
+def get_storage_stats():
+    """Get audio storage statistics."""
+    storage = get_storage_service()
+
+    if not storage.is_configured():
+        return jsonify({'error': 'Audio storage not configured'}), 503
+
+    stats = storage.get_storage_stats()
+
+    return jsonify({
+        'storage': stats,
+        'configured': True
+    }), 200
+
+
+@bp.route('/upload', methods=['POST'])
+@jwt_required()
+def upload_song():
+    """Upload a song file directly (without Suno generation)."""
+    user_id = get_jwt_identity()
+
+    # Check if file is present
+    if 'audio_file' not in request.files:
+        return jsonify({'error': 'No audio file provided'}), 400
+
+    audio_file = request.files['audio_file']
+
+    if audio_file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+
+    # Validate file type (MP3 only)
+    if not audio_file.filename.lower().endswith('.mp3'):
+        return jsonify({'error': 'Only MP3 files are allowed'}), 400
+
+    # Check file size (100MB max)
+    audio_file.seek(0, 2)  # Seek to end
+    file_size = audio_file.tell()
+    audio_file.seek(0)  # Seek back to start
+
+    max_size = 100 * 1024 * 1024  # 100MB
+    if file_size > max_size:
+        return jsonify({'error': 'File too large. Maximum size is 100MB'}), 400
+
+    # Get form data
+    title = request.form.get('title', '').strip()
+    if not title:
+        return jsonify({'error': 'Song title is required'}), 400
+
+    version = request.form.get('version', 'v1')
+    lyrics = request.form.get('lyrics', '')
+
+    # Get storage service
+    storage = get_storage_service()
+    if not storage.is_configured():
+        return jsonify({'error': 'Audio storage not configured'}), 503
+
+    try:
+        # Create song record first to get ID
+        song = Song(
+            user_id=user_id,
+            source_type='uploaded',
+            status='completed',
+            specific_title=title,
+            version=version,
+            specific_lyrics=lyrics,
+            is_archived=True,
+            archived_at=datetime.utcnow()
+        )
+        db.session.add(song)
+        db.session.flush()  # Get the ID without committing
+
+        # Save file to storage
+        song_dir = storage.get_song_dir(song.id)
+        song_dir.mkdir(parents=True, exist_ok=True)
+
+        filename = "track_1.mp3"
+        file_path = song_dir / filename
+        audio_file.save(file_path)
+
+        # Update song with file info
+        actual_size = file_path.stat().st_size
+        song.archived_url_1 = f"{storage.base_url}/songs/{song.id}/{filename}"
+        song.file_size_bytes = actual_size
+
+        db.session.commit()
+
+        current_app.logger.info(f"Song {song.id} uploaded successfully: {title}")
+
+        return jsonify({
+            'message': 'Song uploaded successfully',
+            'song': song.to_dict(include_user=True, include_style=True)
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error uploading song: {str(e)}")
+        return jsonify({'error': str(e)}), 500

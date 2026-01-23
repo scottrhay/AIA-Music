@@ -1,4 +1,4 @@
-# Gunicorn configuration file for SunoApp (Docker version)
+# Gunicorn configuration file for AIASpeech (Docker version)
 
 import multiprocessing
 import os
@@ -11,7 +11,7 @@ backlog = 2048
 workers = min(multiprocessing.cpu_count() * 2 + 1, 4)  # Cap at 4 workers for container
 worker_class = 'sync'
 worker_connections = 1000
-timeout = 30
+timeout = 120  # Increased for long Azure TTS synthesis
 keepalive = 2
 
 # Logging
@@ -21,7 +21,7 @@ loglevel = 'info'
 access_log_format = '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s"'
 
 # Process naming
-proc_name = 'sunoapp'
+proc_name = 'aiaspeech'
 
 # Server mechanics
 daemon = False

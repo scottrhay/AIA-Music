@@ -1,4 +1,4 @@
-# SunoApp Dockerfile
+# AIAMusic Dockerfile
 # Multi-stage build for optimized production image
 
 # Stage 1: Build React frontend
@@ -10,10 +10,13 @@ WORKDIR /app/frontend
 COPY frontend/package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm install --only=production
 
 # Copy frontend source
 COPY frontend/ ./
+
+# Set production API URL
+ENV REACT_APP_API_URL=https://music.aiacopilot.com/api/v1
 
 # Build React app
 RUN npm run build
@@ -44,11 +47,11 @@ COPY backend/ ./
 COPY --from=frontend-builder /app/frontend/build /app/static
 
 # Create non-root user
-RUN useradd -m -u 1000 sunoapp && \
-    chown -R sunoapp:sunoapp /app
+RUN useradd -m -u 1000 aiamusic && \
+    chown -R aiamusic:aiamusic /app
 
 # Switch to non-root user
-USER sunoapp
+USER aiamusic
 
 # Expose port
 EXPOSE 5000

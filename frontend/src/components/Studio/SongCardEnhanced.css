@@ -1,0 +1,287 @@
+@import '../../theme/theme.css';
+
+.song-card-enhanced {
+  position: relative;
+  background: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-base);
+  overflow: hidden;
+  transition: all var(--transition-base);
+  cursor: pointer;
+}
+
+.song-card-enhanced:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.song-card-enhanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-primary-500) 0%, var(--color-primary-800) 100%);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.song-card-enhanced--hovered::before {
+  opacity: 1;
+}
+
+/* Status Badge */
+.song-card-enhanced__status {
+  position: absolute;
+  top: var(--spacing-3);
+  right: var(--spacing-3);
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-3);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: var(--radius-full);
+  backdrop-filter: blur(10px);
+}
+
+.status-ready {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-success);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-generating {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--color-warning);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.status-draft {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--color-info);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.status-failed {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--color-error);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.status-unknown {
+  background: rgba(158, 158, 158, 0.15);
+  color: var(--color-neutral-500);
+  border: 1px solid rgba(158, 158, 158, 0.3);
+}
+
+.status-indicator {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+  border-radius: var(--radius-full);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Header */
+.song-card-enhanced__header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-4) var(--spacing-5);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  min-height: 64px;
+}
+
+.track-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--color-white);
+  border-radius: var(--radius-base);
+  color: var(--color-primary-500);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Actions */
+.song-card-enhanced__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  opacity: 0;
+  transform: translateX(8px);
+  transition: all var(--transition-base);
+}
+
+.song-card-enhanced--hovered .song-card-enhanced__actions {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: var(--color-white);
+  border: 1px solid var(--color-neutral-300);
+  border-radius: var(--radius-base);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--color-neutral-600);
+}
+
+.action-btn:hover {
+  transform: scale(1.1);
+  border-color: currentColor;
+}
+
+.action-btn--play {
+  background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-700) 100%);
+  color: var(--color-white);
+  border: none;
+  box-shadow: var(--shadow-md);
+}
+
+.action-btn--play:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.action-btn--duplicate {
+  color: var(--color-accent-cyan);
+}
+
+.action-btn--duplicate:hover {
+  background: var(--color-accent-cyan);
+  color: var(--color-white);
+}
+
+.action-btn--delete {
+  color: var(--color-error);
+}
+
+.action-btn--delete:hover {
+  background: var(--color-error);
+  color: var(--color-white);
+}
+
+/* Body */
+.song-card-enhanced__body {
+  padding: var(--spacing-5);
+}
+
+.track-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-snug);
+  color: var(--color-neutral-900);
+  margin: 0 0 var(--spacing-3) 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track-lyrics {
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-neutral-600);
+  margin: 0 0 var(--spacing-4) 0;
+  min-height: 3rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Audio Preview */
+.track-audio-preview {
+  margin: var(--spacing-4) 0;
+  padding: var(--spacing-3);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border-radius: var(--radius-base);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.audio-player-mini {
+  width: 100%;
+  height: 32px;
+  outline: none;
+}
+
+.audio-player-mini::-webkit-media-controls-panel {
+  background: transparent;
+}
+
+/* Metadata */
+.track-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+  padding-top: var(--spacing-4);
+  border-top: 1px solid var(--color-neutral-200);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-neutral-600);
+}
+
+.meta-item svg {
+  flex-shrink: 0;
+  color: var(--color-neutral-400);
+}
+
+.meta-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .song-card-enhanced__actions {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .action-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .track-title {
+    font-size: var(--font-size-base);
+  }
+
+  .track-lyrics {
+    font-size: var(--font-size-xs);
+  }
+
+  .track-metadata {
+    gap: var(--spacing-2);
+  }
+}
+
+/* Focus States for Accessibility */
+.song-card-enhanced:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.action-btn:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}

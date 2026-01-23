@@ -1,5 +1,5 @@
 {
-  "name": "sunoapp-frontend",
+  "name": "aiamusic-frontend",
   "version": "1.0.0",
   "private": true,
   "dependencies": {
@@ -16,6 +16,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -36,5 +39,9 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:5000"
+  "proxy": "http://localhost:5000",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "sharp": "^0.34.5"
+  }
 }

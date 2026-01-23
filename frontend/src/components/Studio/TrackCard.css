@@ -1,0 +1,644 @@
+/* AIAMusic TrackCard - Song cards with personality */
+@import '../../theme/theme.css';
+
+.track-card {
+  position: relative;
+  background: var(--color-white);
+  border-radius: var(--radius-2xl);
+  padding: var(--spacing-5);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  border: 1px solid var(--color-neutral-200);
+  overflow: hidden;
+}
+
+/* Gradient accent stripe at top */
+.track-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--gradient-brand);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.track-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-neutral-300);
+}
+
+.track-card:hover::before {
+  opacity: 1;
+}
+
+/* Playing state - distinctive glow */
+.track-card--playing {
+  border-color: var(--color-primary-400);
+  box-shadow: 0 0 0 1px var(--color-primary-400), var(--shadow-primary);
+}
+
+.track-card--playing::before {
+  opacity: 1;
+  animation: gradientFlow 3s ease infinite;
+}
+
+@keyframes gradientFlow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Header */
+.track-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-3);
+}
+
+.track-card__title-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.track-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.track-card__title {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-neutral-900);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+.track-card__version {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--spacing-2);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  background: var(--color-primary-100);
+  color: var(--color-primary-700);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+/* Status badges with distinct styling */
+.track-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-2-5);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.status-ready {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.status-generating {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+}
+
+.status-draft {
+  background: var(--color-info-light);
+  color: var(--color-info);
+}
+
+.status-failed {
+  background: var(--color-error-light);
+  color: var(--color-error);
+}
+
+/* Animated pulse indicator */
+.status-pulse {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+  border-radius: var(--radius-full);
+  animation: pulseGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+}
+
+/* Actions */
+.track-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  flex-shrink: 0;
+}
+
+.track-card__rating {
+  display: flex;
+  align-items: center;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: var(--color-neutral-100);
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--color-neutral-500);
+}
+
+.action-btn:hover {
+  background: var(--color-neutral-200);
+  color: var(--color-neutral-700);
+}
+
+/* Menu */
+.menu-container {
+  position: relative;
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 180px;
+  background: var(--color-white);
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  padding: var(--spacing-2);
+  z-index: var(--z-dropdown);
+  animation: dropdownSlide 0.2s ease-out;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  width: 100%;
+  padding: var(--spacing-2-5) var(--spacing-3);
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-neutral-700);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+
+.menu-item svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.menu-item:hover {
+  background: var(--color-neutral-100);
+  color: var(--color-neutral-900);
+}
+
+.menu-item--danger {
+  color: var(--color-error);
+}
+
+.menu-item--danger:hover {
+  background: var(--color-error-light);
+  color: var(--color-error);
+}
+
+/* Meta info (style name) */
+.track-card__meta {
+  font-size: var(--font-size-sm);
+  color: var(--color-neutral-500);
+  margin-bottom: var(--spacing-2);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.track-card__meta::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  background: var(--gradient-sunset);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+/* Lyrics Preview */
+.track-card__lyrics {
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-neutral-600);
+  margin: 0 0 var(--spacing-4) 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-wrap;
+  padding: var(--spacing-3);
+  background: var(--color-neutral-50);
+  border-radius: var(--radius-lg);
+  border-left: 3px solid var(--color-primary-300);
+  font-style: italic;
+}
+
+/* Track Rows - Audio controls */
+.track-card__tracks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-3);
+  padding-top: var(--spacing-3);
+  border-top: 1px solid var(--color-neutral-100);
+}
+
+.track-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-2);
+  border-radius: var(--radius-lg);
+  transition: background var(--transition-fast);
+}
+
+.track-row:hover {
+  background: var(--color-neutral-50);
+}
+
+/* Play Button - The star of the show */
+.track-row__play {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: var(--color-neutral-100);
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  color: var(--color-neutral-700);
+  flex-shrink: 0;
+}
+
+.track-row__play:hover {
+  background: var(--color-primary-100);
+  color: var(--color-primary-600);
+  transform: scale(1.1);
+}
+
+.track-row__play.playing {
+  background: var(--gradient-brand);
+  color: white;
+  box-shadow: var(--shadow-primary);
+  animation: playPulse 2s ease-in-out infinite;
+}
+
+@keyframes playPulse {
+  0%, 100% { box-shadow: var(--shadow-primary); }
+  50% { box-shadow: var(--shadow-primary-lg); }
+}
+
+.track-row__play.playing:hover {
+  transform: scale(1.05);
+}
+
+.track-row__play svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Track Name */
+.track-row__name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-neutral-800);
+  flex: 1;
+}
+
+/* Playlist Indicator */
+.track-row__playlist {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-2);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-neutral-500);
+  transition: all var(--transition-fast);
+}
+
+.track-row__playlist svg {
+  width: 14px;
+  height: 14px;
+}
+
+.track-row__playlist:hover {
+  background: var(--color-neutral-100);
+  color: var(--color-neutral-700);
+}
+
+.track-row__playlist.in-list {
+  color: var(--color-secondary-600);
+  font-weight: var(--font-weight-semibold);
+  background: var(--color-secondary-50);
+}
+
+.track-row__playlist.in-list:hover {
+  background: var(--color-secondary-100);
+}
+
+/* Download Button */
+.track-row__download {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--color-neutral-400);
+  flex-shrink: 0;
+}
+
+.track-row__download svg {
+  width: 16px;
+  height: 16px;
+}
+
+.track-row__download:hover {
+  background: var(--color-neutral-100);
+  color: var(--color-neutral-600);
+}
+
+.track-row__download.not-downloaded {
+  color: var(--color-accent-gold);
+  position: relative;
+}
+
+.track-row__download.not-downloaded::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  background: var(--color-accent-gold);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-white);
+}
+
+.track-row__download.not-downloaded:hover {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--color-accent-gold-dark);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .track-card {
+    padding: var(--spacing-4);
+    border-radius: var(--radius-xl);
+  }
+
+  .track-card__title {
+    font-size: var(--font-size-base);
+  }
+
+  .track-row {
+    gap: var(--spacing-2);
+    padding: var(--spacing-1-5);
+  }
+
+  .track-row__play {
+    width: 32px;
+    height: 32px;
+  }
+
+  .track-row__playlist span {
+    display: none;
+  }
+
+  .track-card__lyrics {
+    padding: var(--spacing-2);
+  }
+}
+
+/* Focus states */
+.track-card:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.action-btn:focus-visible,
+.track-row__play:focus-visible,
+.track-row__playlist:focus-visible,
+.track-row__download:focus-visible,
+.menu-item:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+/* Entry animation for cards */
+.track-card {
+  animation: cardEntrance 0.3s ease-out;
+  animation-fill-mode: both;
+}
+
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stagger animation for card lists */
+.track-card:nth-child(1) { animation-delay: 0ms; }
+.track-card:nth-child(2) { animation-delay: 50ms; }
+.track-card:nth-child(3) { animation-delay: 100ms; }
+.track-card:nth-child(4) { animation-delay: 150ms; }
+.track-card:nth-child(5) { animation-delay: 200ms; }
+.track-card:nth-child(6) { animation-delay: 250ms; }
+.track-card:nth-child(n+7) { animation-delay: 300ms; }
+
+/* Star Rating Micro-interactions */
+.track-card__rating .star {
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--color-neutral-300);
+}
+
+.track-card__rating .star:hover {
+  transform: scale(1.2);
+}
+
+.track-card__rating .star.filled {
+  color: #f59e0b;
+}
+
+.track-card__rating .star.filling {
+  animation: starFill 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+@keyframes starFill {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+/* Archived Indicator - shows song is permanently saved */
+.track-card__archived {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: 2px var(--spacing-2);
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-semibold);
+  background: rgba(6, 182, 212, 0.1);
+  color: var(--color-secondary-600);
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wider);
+}
+
+.track-card__archived svg {
+  width: 10px;
+  height: 10px;
+}
+
+/* Sound Wave Playing Indicator */
+.sound-wave {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 16px;
+}
+
+.sound-wave__bar {
+  width: 3px;
+  background: currentColor;
+  border-radius: 1px;
+  animation: soundWave 0.6s ease-in-out infinite;
+}
+
+.sound-wave__bar:nth-child(1) { animation-delay: 0s; }
+.sound-wave__bar:nth-child(2) { animation-delay: 0.15s; }
+.sound-wave__bar:nth-child(3) { animation-delay: 0.3s; }
+.sound-wave__bar:nth-child(4) { animation-delay: 0.45s; }
+
+@keyframes soundWave {
+  0%, 100% { height: 4px; }
+  50% { height: 16px; }
+}
+
+/* Quality Badge */
+.track-card__quality {
+  position: absolute;
+  top: var(--spacing-3);
+  right: var(--spacing-3);
+  padding: 2px 6px;
+  background: rgba(6, 182, 212, 0.15);
+  border: 1px solid var(--color-secondary-400);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-2xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-secondary-500);
+  letter-spacing: var(--letter-spacing-wider);
+}
+
+/* Skeleton Loading State */
+.track-card-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-neutral-100) 25%,
+    var(--color-neutral-200) 50%,
+    var(--color-neutral-100) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-2xl);
+  min-height: 200px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Reduce motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .track-card,
+  .track-card__rating .star,
+  .sound-wave__bar,
+  .track-card-skeleton {
+    animation: none;
+  }
+
+  .track-card:hover {
+    transform: none;
+  }
+
+  .track-row__play:hover {
+    transform: none;
+  }
+}

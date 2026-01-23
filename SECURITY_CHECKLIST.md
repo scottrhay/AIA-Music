@@ -35,7 +35,7 @@ Look for any `.env` files in the output. If you see them, **STOP** - they should
 
 ### 2. Check what files are being added
 ```bash
-git add SunoApp/
+git add AIASpeech/
 git status
 ```
 
@@ -86,9 +86,9 @@ If you accidentally commit and push secrets:
 
 **Your repository is currently SAFE:**
 - ✅ `.gitignore` includes `.env` and `.env.local`
-- ✅ No `.env` files found in local SunoApp directory
+- ✅ No `.env` files found in local AIASpeech directory
 - ✅ `.env.example` files are present (safe to commit)
-- ✅ SunoApp directory is untracked (nothing committed yet)
+- ✅ AIASpeech directory is untracked (nothing committed yet)
 
 ## 📝 When Setting Up on a New Machine
 
@@ -101,5 +101,5 @@ If you accidentally commit and push secrets:
 
 - **Development:** Use `.env` (gitignored)
 - **Production:** Use environment variables or secret management service
-- **VPS:** Store `.env` at `/var/www/sunoapp/.env` (outside Git)
+- **VPS:** Store `.env` at `/var/www/aiaspeech/.env` (outside Git)
 - **Team sharing:** Share `.env.example`, communicate real values securely (not via Git)

@@ -15,7 +15,7 @@ Simplified the Styles feature from 6 separate fields to just 2 fields, matching 
 
 **After:**
 - Style Name
-- Style Prompt (the full Suno prompt)
+- Style Prompt (the full Azure Speech prompt)
 
 ## Files Modified
 
@@ -42,7 +42,7 @@ ssh root@srv800338.hstgr.cloud
 scp database/migration_simplify_styles.sql root@srv800338.hstgr.cloud:/tmp/
 
 # On VPS, run the migration
-docker exec -i mysql mysql -u root -p sunoapp_db < /tmp/migration_simplify_styles.sql
+docker exec -i mysql mysql -u root -p aiaspeech_db < /tmp/migration_simplify_styles.sql
 ```
 
 This will:
@@ -55,18 +55,18 @@ This will:
 
 ```bash
 # Upload backend changes
-scp backend/app/models.py root@srv800338.hstgr.cloud:/var/www/sunoapp/backend/app/
-scp backend/app/routes/styles.py root@srv800338.hstgr.cloud:/var/www/sunoapp/backend/app/routes/
+scp backend/app/models.py root@srv800338.hstgr.cloud:/var/www/aiaspeech/backend/app/
+scp backend/app/routes/styles.py root@srv800338.hstgr.cloud:/var/www/aiaspeech/backend/app/routes/
 
 # Upload frontend changes
-scp frontend/src/components/StyleModal.js root@srv800338.hstgr.cloud:/var/www/sunoapp/frontend/src/components/
+scp frontend/src/components/StyleModal.js root@srv800338.hstgr.cloud:/var/www/aiaspeech/frontend/src/components/
 ```
 
 ### Step 3: Rebuild and Deploy (on VPS)
 
 ```bash
 # Rebuild the Docker containers
-cd /var/www/sunoapp
+cd /var/www/aiaspeech
 docker compose down
 docker compose build --no-cache
 docker compose up -d
@@ -82,24 +82,24 @@ docker compose ps
 cd frontend
 
 # Build with correct API URL
-$env:REACT_APP_API_URL="https://suno.aiacopilot.com/api/v1"
+$env:REACT_APP_API_URL="https://speech.aiacopilot.com/api/v1"
 npm run build
 
 # Upload to VPS
 cd ..
-scp -r frontend/build root@srv800338.hstgr.cloud:/var/www/sunoapp/frontend/
+scp -r frontend/build root@srv800338.hstgr.cloud:/var/www/aiaspeech/frontend/
 ```
 
 ### Step 5: Restart Nginx (on VPS)
 
 ```bash
-cd /var/www/sunoapp
+cd /var/www/aiaspeech
 docker compose restart nginx
 ```
 
 ### Step 6: Test
 
-1. Visit https://suno.aiacopilot.com
+1. Visit https://speech.aiacopilot.com
 2. Log in
 3. Go to "Manage Styles"
 4. Click "Add New Style"
@@ -134,4 +134,4 @@ Then revert the code changes and rebuild.
 - Existing styles will have their data migrated automatically
 - The old fields are combined into a single prompt
 - The UI is much simpler now - just like your Excel workflow!
-- You can paste your full Suno prompt directly into the Style Prompt field
+- You can paste your full Azure Speech prompt directly into the Style Prompt field

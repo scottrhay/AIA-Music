@@ -1,64 +1,64 @@
-# SunoApp - Music Creation Management Platform
+# AIAMusic - Music Creation Management Platform
 
 A modern web-based platform for managing music creation with Suno API integration.
 
-## 🎵 What is SunoApp?
+## What is AIAMusic?
 
-SunoApp replaces Excel-based music workflows with a professional, database-driven web application. Built for teams creating music with Suno API, it provides:
+AIAMusic replaces Excel-based music workflows with a professional, database-driven web application. Built for teams creating music with Suno API, it provides:
 
-- **Song Management** - Track songs through creation lifecycle (Create → Submitted → Completed)
+- **Song Management** - Track songs through creation lifecycle (Create -> Submitted -> Completed)
 - **Style Library** - Manage reusable music style templates
 - **Team Collaboration** - Multiple users working together
 - **Search & Filter** - Find songs by status, style, lyrics, or vocal gender
-- **n8n Integration** - Automatic Suno API submission and status updates
-- **Download Tracking** - Organize generated MP3 files
+- **Direct Suno API Integration** - Automatic music generation and webhook callbacks
+- **Auto-Download** - Files automatically download when ready (expire after 15 days)
+- **Star Rating System** - Rate and filter songs with 1-5 stars
 
-## 🚀 Quick Start
+## Quick Start
 
 **Choose your deployment method:**
 
 ### Option A: Docker (Recommended - Clean VPS)
-✅ Keeps VPS clean
-✅ Easy removal
-✅ Portable
+- Keeps VPS clean
+- Easy removal
+- Portable
 
-👉 **Follow:** `DOCKER_DEPLOYMENT_CHECKLIST.md`
+Follow: `DOCKER_DEPLOYMENT_CHECKLIST.md`
 
 ### Option B: Direct Install
-✅ Simpler
-✅ Slightly better performance
+- Simpler
+- Slightly better performance
 
-👉 **Follow:** `DEPLOYMENT_CHECKLIST.md`
+Follow: `DEPLOYMENT_CHECKLIST.md`
 
-## 📋 What You Need
+## What You Need
 
-- **VPS**: Ubuntu 24.04 (you have: Hostinger VPS)
-- **MySQL**: 8.0+ (you have it)
-- **n8n**: Running instance (you have it)
-- **Domain**: Pointing to your VPS (suno.aiacopilot.com)
-- **Time**: 30-45 minutes
+- **VPS**: Ubuntu 24.04 or similar Linux server
+- **MySQL**: 8.0+ database
+- **Suno API Key**: From Suno API service
+- **Domain**: Pointing to your VPS (optional but recommended)
 
-## 🏗️ Architecture
+## Architecture
 
 ```
-Users → HTTPS → Nginx → SunoApp (Flask + React) → MySQL
-                                        ↕
-                                      n8n ↔ Suno API
+Users -> HTTPS -> Nginx -> AIAMusic (Flask + React) -> MySQL
+                              |
+                         Suno API (webhooks)
 ```
 
-## 💻 Technology Stack
+## Technology Stack
 
 - **Backend**: Flask (Python 3.11)
 - **Frontend**: React 18
 - **Database**: MySQL 8.0
 - **Server**: Gunicorn + Nginx
-- **Automation**: n8n workflows
+- **API Integration**: Direct Suno API with webhooks
 - **Security**: JWT authentication, SSL/HTTPS
 
-## 📁 Project Structure
+## Project Structure
 
 ```
-SunoApp/
+AIAMusic/
 ├── backend/              # Flask API
 ├── frontend/             # React UI
 ├── database/             # SQL schema
@@ -69,7 +69,7 @@ SunoApp/
 └── Makefile            # Convenience commands
 ```
 
-## 🔒 Security & Environment Setup
+## Security & Environment Setup
 
 **IMPORTANT:** Never commit secrets to Git!
 
@@ -89,7 +89,7 @@ SunoApp/
 
 4. Share `.env.example` with your team (it's safe - contains no secrets)
 
-## 📖 Documentation
+## Documentation
 
 ### Getting Started
 - **START_HERE.md** - Overview and quick links
@@ -103,13 +103,12 @@ SunoApp/
 - **docs/QUICK_START.md** - Fast deployment path
 - **docs/API.md** - API documentation
 - **docs/DEVELOPMENT.md** - Local development
-- **docs/n8n_workflow_updates.md** - n8n integration
 
-## 💰 Cost
+## Cost
 
-**$0 per month** - Uses your existing VPS, MySQL, and n8n.
+**Minimal** - Uses your existing VPS and MySQL. Only cost is Suno API credits.
 
-## 📜 License
+## License
 
 Private project for AIA Copilot team use.
 
@@ -120,4 +119,4 @@ Private project for AIA Copilot team use.
 Docker (recommended): Open `DOCKER_DEPLOYMENT_CHECKLIST.md`
 Direct install: Open `DEPLOYMENT_CHECKLIST.md`
 
-Let's create some music! 🎵🚀
+Let's create some music!

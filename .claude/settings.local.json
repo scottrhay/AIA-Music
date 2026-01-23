@@ -2,14 +2,20 @@
   "permissions": {
     "allow": [
       "Bash(find:*)",
-      "Bash(ssh root@srv800338.hstgr.cloud \"docker exec sunoapp-nginx ls -la /usr/share/nginx/html/\")",
-      "Bash(ssh root@srv800338.hstgr.cloud \"docker exec sunoapp-nginx ls -la /usr/share/nginx/html/static/js/\")",
-      "Bash(ssh root@srv800338.hstgr.cloud:*)",
+      "Bash(ssh root@168.231.71.238:*)",
       "Bash(curl:*)",
       "Bash(scp:*)",
       "Bash(npm run build:*)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(tar:*)",
+      "Bash(docker build:*)",
+      "Bash(npm start)",
+      "Bash(docker save:*)",
+      "Bash(gzip:*)",
+      "Bash(git rm:*)",
+      "Bash(git push:*)"
     ]
   }
 }
