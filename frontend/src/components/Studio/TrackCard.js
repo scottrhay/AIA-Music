@@ -176,22 +176,33 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
         audioRef.current.pause();
         setPlayingTrack(null);
       } else {
-        // iOS fix: load the audio first, then play
         const audio = audioRef.current;
+
+        // iOS Safari requires user interaction to unmute and play
+        // Reset the audio element to ensure clean state
+        audio.currentTime = 0;
+        audio.volume = 1.0;
+
+        // iOS fix: load then play with proper promise handling
         audio.load();
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              setPlayingTrack(trackNum);
-            })
-            .catch((error) => {
-              console.error('Playback failed:', error);
-              setPlayingTrack(null);
-            });
-        } else {
-          setPlayingTrack(trackNum);
-        }
+
+        // Small delay to let iOS process the load
+        setTimeout(() => {
+          const playPromise = audio.play();
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => {
+                setPlayingTrack(trackNum);
+              })
+              .catch((error) => {
+                console.error('Playback failed:', error);
+                // Try once more after user gesture
+                setPlayingTrack(null);
+              });
+          } else {
+            setPlayingTrack(trackNum);
+          }
+        }, 100);
       }
     }
   };

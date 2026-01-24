@@ -214,7 +214,7 @@ function SongViewModal({ song, onClose, onDuplicate, onEdit, onSongUpdated }) {
                         </svg>
                       </button>
                     </div>
-                    <audio controls className="audio-player" style={{ width: '100%' }}>
+                    <audio controls playsInline className="audio-player" style={{ width: '100%' }}>
                       <source src={song.archived_url_1 || song.download_url_1} type="audio/mpeg" />
                       Your browser does not support the audio element.
                     </audio>
@@ -242,7 +242,7 @@ function SongViewModal({ song, onClose, onDuplicate, onEdit, onSongUpdated }) {
                         </svg>
                       </button>
                     </div>
-                    <audio controls className="audio-player" style={{ width: '100%' }}>
+                    <audio controls playsInline className="audio-player" style={{ width: '100%' }}>
                       <source src={song.archived_url_2 || song.download_url_2} type="audio/mpeg" />
                       Your browser does not support the audio element.
                     </audio>

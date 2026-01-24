@@ -3,7 +3,7 @@
  * Provides offline support and audio caching for the PWA
  */
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `aiamusic-static-${CACHE_VERSION}`;
 const AUDIO_CACHE = `aiamusic-audio-${CACHE_VERSION}`;
 const API_CACHE = `aiamusic-api-${CACHE_VERSION}`;
