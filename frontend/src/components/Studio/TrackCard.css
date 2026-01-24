@@ -84,6 +84,22 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   letter-spacing: var(--letter-spacing-tight);
+  cursor: text;
+}
+
+.track-card__title-input {
+  width: 100%;
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-neutral-900);
+  letter-spacing: var(--letter-spacing-tight);
+  border: 1px solid var(--color-primary-400);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-1) var(--spacing-2);
+  outline: none;
+  background: var(--color-white);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
 .track-card__version {

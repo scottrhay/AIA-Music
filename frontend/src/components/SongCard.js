@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './SongCard.css';
 
-function SongCard({ song, onView, onDelete, onDuplicate }) {
+function SongCard({ song, onView, onDelete, onDuplicate, onUpdateTitle }) {
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(song.specific_title || '');
   const getStatusClass = (status) => {
     switch (status) {
       case 'create':
@@ -25,6 +27,28 @@ function SongCard({ song, onView, onDelete, onDuplicate }) {
     if (!text) return 'No lyrics provided';
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
+  };
+
+  const handleTitleClick = (e) => {
+    e.stopPropagation();
+    setEditedTitle(song.specific_title || '');
+    setIsEditingTitle(true);
+  };
+
+  const handleTitleSave = async () => {
+    if (editedTitle !== song.specific_title && onUpdateTitle) {
+      await onUpdateTitle(song.id, editedTitle);
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleTitleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleTitleSave();
+    } else if (e.key === 'Escape') {
+      setEditedTitle(song.specific_title || '');
+      setIsEditingTitle(false);
+    }
   };
 
   return (
@@ -66,8 +90,21 @@ function SongCard({ song, onView, onDelete, onDuplicate }) {
       </div>
 
       <div className="song-card-body">
-        <h3 className="song-title">
-          {song.specific_title || 'Untitled Song'}
+        <h3 className="song-title" onClick={handleTitleClick}>
+          {isEditingTitle ? (
+            <input
+              type="text"
+              value={editedTitle}
+              onChange={(e) => setEditedTitle(e.target.value)}
+              onBlur={handleTitleSave}
+              onKeyDown={handleTitleKeyDown}
+              className="title-edit-input"
+              autoFocus
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            song.specific_title || 'Untitled Song'
+          )}
         </h3>
 
         <p className="song-lyrics">{truncateText(song.specific_lyrics)}</p>

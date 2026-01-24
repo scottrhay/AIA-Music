@@ -34,6 +34,8 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
   const [playingTrack, setPlayingTrack] = useState(null);
   const [generationProgress, setGenerationProgress] = useState({ progress: 10, stage: 'Composing...' });
   const [lastCheckedAgo, setLastCheckedAgo] = useState('');
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(song.specific_title || '');
   const audioRef1 = useRef(null);
   const audioRef2 = useRef(null);
 
@@ -188,6 +190,34 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
     }
   };
 
+  const handleTitleClick = (e) => {
+    e.stopPropagation();
+    setEditedTitle(song.specific_title || '');
+    setIsEditingTitle(true);
+  };
+
+  const handleTitleSave = async () => {
+    if (editedTitle !== song.specific_title) {
+      try {
+        await updateSong(song.id, { specific_title: editedTitle });
+        song.specific_title = editedTitle;
+      } catch (error) {
+        console.error('Failed to update title:', error);
+        setEditedTitle(song.specific_title || '');
+      }
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleTitleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleTitleSave();
+    } else if (e.key === 'Escape') {
+      setEditedTitle(song.specific_title || '');
+      setIsEditingTitle(false);
+    }
+  };
+
   const lyricsPreview = truncateToLines(song.specific_lyrics, 2);
 
   return (
@@ -198,10 +228,23 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
       {/* Header Row */}
       <div className="track-card__header">
         <div className="track-card__title-section">
-          <h3 className="track-card__title">
-            {song.specific_title || 'Untitled Song'}
+          <h3 className="track-card__title" onClick={handleTitleClick}>
+            {isEditingTitle ? (
+              <input
+                type="text"
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                onBlur={handleTitleSave}
+                onKeyDown={handleTitleKeyDown}
+                className="track-card__title-input"
+                autoFocus
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              song.specific_title || 'Untitled Song'
+            )}
           </h3>
-          {song.version && <span className="track-card__version">{song.version}</span>}
+          {!isEditingTitle && song.version && <span className="track-card__version">{song.version}</span>}
 
           {/* Status badge for non-ready songs */}
           {(song.status !== 'completed' || !hasAudio) && !isGenerating && (

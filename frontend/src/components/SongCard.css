@@ -75,6 +75,23 @@
   font-weight: 600;
   margin-bottom: 0.75rem;
   color: #333;
+  cursor: text;
+}
+
+.title-edit-input {
+  width: 100%;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #333;
+  border: 1px solid #667eea;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  outline: none;
+  background: white;
+}
+
+.title-edit-input:focus {
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
 }
 
 .song-lyrics {

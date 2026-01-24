@@ -3,7 +3,7 @@
  * Provides offline support and audio caching for the PWA
  */
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const STATIC_CACHE = `aiamusic-static-${CACHE_VERSION}`;
 const AUDIO_CACHE = `aiamusic-audio-${CACHE_VERSION}`;
 const API_CACHE = `aiamusic-api-${CACHE_VERSION}`;
@@ -76,10 +76,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Audio files - cache first, then network
+  // Audio files - let them pass through to network directly
+  // iOS Safari has issues with service worker intercepting audio streams
   if (isAudioRequest(url)) {
-    event.respondWith(cacheFirstAudio(request));
-    return;
+    return; // Don't intercept, let browser handle directly
   }
 
   // JS/CSS files - network first to get latest updates

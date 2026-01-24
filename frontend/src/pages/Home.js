@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getSongs, getSongStats, deleteSong } from '../services/songs';
+import { getSongs, getSongStats, deleteSong, updateSong } from '../services/songs';
 import { getUser } from '../services/auth';
 import SongCard from '../components/SongCard';
 import SongModal from '../components/SongModal';
@@ -121,6 +121,15 @@ function Home({ onLogout }) {
     setShowModal(true);
   };
 
+  const handleUpdateTitle = async (songId, newTitle) => {
+    try {
+      await updateSong(songId, { specific_title: newTitle });
+      loadData();
+    } catch (error) {
+      console.error('Error updating song title:', error);
+    }
+  };
+
   const handleModalClose = (shouldRefresh) => {
     setShowModal(false);
     setEditingSong(null);
@@ -235,6 +244,7 @@ function Home({ onLogout }) {
                 onView={handleViewSong}
                 onDelete={handleDeleteSong}
                 onDuplicate={handleDuplicateSong}
+                onUpdateTitle={handleUpdateTitle}
               />
             ))}
           </div>
