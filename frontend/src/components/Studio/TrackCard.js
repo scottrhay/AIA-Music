@@ -118,7 +118,6 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
   };
 
   const hasAudio = song.status === 'completed' && (song.download_url_1 || song.download_url_2 || song.archived_url_1 || song.archived_url_2);
-  const hasPlaylist = song.playlists && song.playlists.length > 0;
 
   const getStatusInfo = (status) => {
     if (status === 'completed' && !hasAudio) {
