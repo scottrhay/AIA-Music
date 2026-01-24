@@ -176,8 +176,22 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
         audioRef.current.pause();
         setPlayingTrack(null);
       } else {
-        audioRef.current.play().catch(console.error);
-        setPlayingTrack(trackNum);
+        // iOS fix: load the audio first, then play
+        const audio = audioRef.current;
+        audio.load();
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              setPlayingTrack(trackNum);
+            })
+            .catch((error) => {
+              console.error('Playback failed:', error);
+              setPlayingTrack(null);
+            });
+        } else {
+          setPlayingTrack(trackNum);
+        }
       }
     }
   };
@@ -333,9 +347,23 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
             />
           )}
 
-          {/* Hidden audio elements - prefer archived URLs */}
-          <audio ref={audioRef1} src={song.archived_url_1 || song.download_url_1} onEnded={() => handleAudioEnded(1)} style={{ display: 'none' }} />
-          <audio ref={audioRef2} src={song.archived_url_2 || song.download_url_2} onEnded={() => handleAudioEnded(2)} style={{ display: 'none' }} />
+          {/* Hidden audio elements - prefer archived URLs, iOS-compatible */}
+          <audio
+            ref={audioRef1}
+            src={song.archived_url_1 || song.download_url_1}
+            onEnded={() => handleAudioEnded(1)}
+            preload="none"
+            playsInline
+            style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
+          />
+          <audio
+            ref={audioRef2}
+            src={song.archived_url_2 || song.download_url_2}
+            onEnded={() => handleAudioEnded(2)}
+            preload="none"
+            playsInline
+            style={{ position: 'absolute', width: 0, height: 0, opacity: 0 }}
+          />
         </div>
       )}
     </div>
