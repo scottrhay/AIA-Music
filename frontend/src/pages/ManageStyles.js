@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopBar from '../components/Studio/TopBar';
-import { getStyles, createStyle, updateStyle, deleteStyle } from '../services/styles';
+import { getStyles, createStyle, updateStyle, deleteStyle, getStyleSongsCount } from '../services/styles';
 import '../theme/theme.css';
 import './ManageStyles.css';
 
@@ -18,6 +18,12 @@ function ManageStyles({ onLogout }) {
     name: '',
     style_prompt: ''
   });
+
+  // Delete modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteInfo, setDeleteInfo] = useState({ style: null, songsCount: 0 });
+  const [reassignTo, setReassignTo] = useState(0);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     loadStyles();
@@ -99,19 +105,55 @@ function ManageStyles({ onLogout }) {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm(`Delete style "${selectedStyle.name}"? This cannot be undone.`)) {
-      return;
-    }
+    if (!selectedStyle) return;
 
     try {
-      await deleteStyle(selectedStyle.id);
-      const newStyles = styles.filter(s => s.id !== selectedStyle.id);
-      setStyles(newStyles);
-      setSelectedStyle(newStyles.length > 0 ? newStyles[0] : null);
+      // First check how many songs use this style
+      const countData = await getStyleSongsCount(selectedStyle.id);
+
+      if (countData.count > 0) {
+        // Show reassignment modal
+        setDeleteInfo({ style: selectedStyle, songsCount: countData.count });
+        setReassignTo(0); // Default to "No style"
+        setShowDeleteModal(true);
+      } else {
+        // No songs, confirm and delete directly
+        if (window.confirm(`Delete style "${selectedStyle.name}"? This cannot be undone.`)) {
+          await performDelete(selectedStyle.id, null);
+        }
+      }
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to delete style');
+      setError(err.response?.data?.error || 'Failed to check style usage');
     }
   };
+
+  const performDelete = async (styleId, reassignToId) => {
+    setDeleting(true);
+    try {
+      await deleteStyle(styleId, reassignToId);
+      const newStyles = styles.filter(s => s.id !== styleId);
+      setStyles(newStyles);
+      setSelectedStyle(newStyles.length > 0 ? newStyles[0] : null);
+      setShowDeleteModal(false);
+      setIsEditing(false);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete style');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    performDelete(deleteInfo.style.id, reassignTo);
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeleteInfo({ style: null, songsCount: 0 });
+  };
+
+  // Get styles available for reassignment (exclude the one being deleted)
+  const availableStyles = styles.filter(s => s.id !== deleteInfo.style?.id);
 
   return (
     <div className="manage-styles">
@@ -272,6 +314,56 @@ function ManageStyles({ onLogout }) {
           </div>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal with Reassignment */}
+      {showDeleteModal && (
+        <div className="modal-overlay" onClick={handleCancelDelete}>
+          <div className="modal-content delete-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Delete Style</h2>
+              <button className="modal-close" onClick={handleCancelDelete}>×</button>
+            </div>
+            <div className="modal-body">
+              <p>
+                The style <strong>"{deleteInfo.style?.name}"</strong> is used by{' '}
+                <strong>{deleteInfo.songsCount} song{deleteInfo.songsCount !== 1 ? 's' : ''}</strong>.
+              </p>
+              <p>Choose which style to assign these songs to:</p>
+
+              <div className="reassign-select-wrapper">
+                <select
+                  value={reassignTo}
+                  onChange={(e) => setReassignTo(parseInt(e.target.value))}
+                  className="reassign-select"
+                >
+                  <option value={0}>No style (remove style from songs)</option>
+                  {availableStyles.map(style => (
+                    <option key={style.id} value={style.id}>
+                      {style.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn btn-secondary"
+                onClick={handleCancelDelete}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={handleConfirmDelete}
+                disabled={deleting}
+              >
+                {deleting ? 'Deleting...' : 'Delete Style'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
