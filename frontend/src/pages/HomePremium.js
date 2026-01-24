@@ -37,6 +37,7 @@ function HomePremium({ onLogout }) {
     all_users: false,
     min_stars: 0,
   });
+  const [lastCheckedAt, setLastCheckedAt] = useState(null);
 
   const loadData = async () => {
     try {
@@ -90,6 +91,7 @@ function HomePremium({ onLogout }) {
 
       try {
         const result = await checkAllSubmitted();
+        setLastCheckedAt(Date.now()); // Track when we last checked
 
         // Update songs in-place without full refresh
         if (result.results && result.results.length > 0) {
@@ -299,6 +301,7 @@ function HomePremium({ onLogout }) {
                 onEdit={handleEditSong}
                 onAssignPlaylist={handleAssignPlaylist}
                 isPlaying={playingSongId === song.id}
+                lastCheckedAt={lastCheckedAt}
               />
             ))}
           </TrackGrid>

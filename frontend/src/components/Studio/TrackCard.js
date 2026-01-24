@@ -1,14 +1,85 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './TrackCard.css';
 import StarRating from '../StarRating';
 import { updateSongRating, updateSong } from '../../services/songs';
 
-function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange, isPlaying, onAssignPlaylist }) {
+// Calculate generation progress and stage based on elapsed time
+function getGenerationProgress(startTime) {
+  if (!startTime) return { progress: 10, stage: 'Composing...' };
+
+  const elapsed = (Date.now() - new Date(startTime).getTime()) / 1000; // seconds
+
+  if (elapsed < 30) {
+    // 0-30s: 10-40% "Composing..."
+    const progress = 10 + (elapsed / 30) * 30;
+    return { progress: Math.min(progress, 40), stage: 'Composing...' };
+  } else if (elapsed < 90) {
+    // 30-90s: 40-70% "Arranging..."
+    const progress = 40 + ((elapsed - 30) / 60) * 30;
+    return { progress: Math.min(progress, 70), stage: 'Arranging...' };
+  } else if (elapsed < 180) {
+    // 90-180s: 70-90% "Mixing & mastering..."
+    const progress = 70 + ((elapsed - 90) / 90) * 20;
+    return { progress: Math.min(progress, 90), stage: 'Mixing & mastering...' };
+  } else {
+    // 180s+: 90-95% "Finishing touches..." (never hits 100%)
+    const progress = 90 + Math.min((elapsed - 180) / 120, 1) * 5;
+    return { progress: Math.min(progress, 95), stage: 'Finishing touches...' };
+  }
+}
+
+function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange, isPlaying, onAssignPlaylist, lastCheckedAt }) {
   const [showMenu, setShowMenu] = useState(false);
   const [rating, setRating] = useState(song.star_rating || 0);
   const [playingTrack, setPlayingTrack] = useState(null);
+  const [generationProgress, setGenerationProgress] = useState({ progress: 10, stage: 'Composing...' });
+  const [lastCheckedAgo, setLastCheckedAgo] = useState('');
   const audioRef1 = useRef(null);
   const audioRef2 = useRef(null);
+
+  // Check if song is generating
+  const isGenerating = song.status === 'submitted' || (song.status === 'completed' && !song.download_url_1 && !song.download_url_2 && !song.archived_url_1 && !song.archived_url_2);
+
+  // Update progress every second for generating songs
+  useEffect(() => {
+    if (!isGenerating) return;
+
+    // Use submitted_at from song, or fall back to created_at, or current time
+    const startTime = song.submitted_at || song.created_at || new Date().toISOString();
+
+    // Initial calculation
+    setGenerationProgress(getGenerationProgress(startTime));
+
+    // Update every second
+    const interval = setInterval(() => {
+      setGenerationProgress(getGenerationProgress(startTime));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isGenerating, song.submitted_at, song.created_at]);
+
+  // Update "last checked" display
+  useEffect(() => {
+    if (!isGenerating || !lastCheckedAt) {
+      setLastCheckedAgo('');
+      return;
+    }
+
+    const updateLastChecked = () => {
+      const seconds = Math.floor((Date.now() - lastCheckedAt) / 1000);
+      if (seconds < 5) {
+        setLastCheckedAgo('just now');
+      } else if (seconds < 60) {
+        setLastCheckedAgo(`${seconds}s ago`);
+      } else {
+        setLastCheckedAgo(`${Math.floor(seconds / 60)}m ago`);
+      }
+    };
+
+    updateLastChecked();
+    const interval = setInterval(updateLastChecked, 1000);
+    return () => clearInterval(interval);
+  }, [isGenerating, lastCheckedAt]);
 
   const handleDownload = async (url, filename, trackNumber) => {
     try {
@@ -134,12 +205,9 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
           {song.version && <span className="track-card__version">{song.version}</span>}
 
           {/* Status badge for non-ready songs */}
-          {(song.status !== 'completed' || !hasAudio) && (
+          {(song.status !== 'completed' || !hasAudio) && !isGenerating && (
             <span className={`track-card__status ${statusInfo.className}`}>
               {statusInfo.label}
-              {(song.status === 'submitted' || (song.status === 'completed' && !hasAudio)) && (
-                <span className="status-pulse"></span>
-              )}
             </span>
           )}
         </div>
@@ -208,6 +276,28 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
       {/* Lyrics Preview - max 2 lines */}
       {lyricsPreview && (
         <p className="track-card__lyrics">{lyricsPreview}</p>
+      )}
+
+      {/* Generation Progress Bar */}
+      {isGenerating && (
+        <div className="generation-progress">
+          <div className="generation-progress__header">
+            <span className="generation-progress__stage">{generationProgress.stage}</span>
+            <span className="generation-progress__percent">{Math.round(generationProgress.progress)}%</span>
+          </div>
+          <div className="generation-progress__bar">
+            <div
+              className="generation-progress__fill"
+              style={{ width: `${generationProgress.progress}%` }}
+            />
+          </div>
+          {lastCheckedAgo && (
+            <div className="generation-progress__footer">
+              <span className="generation-progress__spinner"></span>
+              <span>Checked {lastCheckedAgo}</span>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Track Rows - only show if has audio */}

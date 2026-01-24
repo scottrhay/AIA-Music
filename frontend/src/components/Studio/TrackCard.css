@@ -625,12 +625,85 @@
   100% { background-position: -200% 0; }
 }
 
+/* Generation Progress Bar */
+.generation-progress {
+  margin-top: var(--spacing-3);
+  padding: var(--spacing-3);
+  background: var(--color-neutral-50);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-warning-light);
+}
+
+.generation-progress__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-2);
+}
+
+.generation-progress__stage {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-warning);
+}
+
+.generation-progress__percent {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-neutral-500);
+}
+
+.generation-progress__bar {
+  height: 6px;
+  background: var(--color-neutral-200);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.generation-progress__fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-warning) 0%, #f59e0b 50%, var(--color-warning) 100%);
+  background-size: 200% 100%;
+  border-radius: var(--radius-full);
+  transition: width 1s ease-out;
+  animation: progressShimmer 2s ease-in-out infinite;
+}
+
+@keyframes progressShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.generation-progress__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  margin-top: var(--spacing-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-neutral-500);
+}
+
+.generation-progress__spinner {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--color-neutral-300);
+  border-top-color: var(--color-warning);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Reduce motion preference */
 @media (prefers-reduced-motion: reduce) {
   .track-card,
   .track-card__rating .star,
   .sound-wave__bar,
-  .track-card-skeleton {
+  .track-card-skeleton,
+  .generation-progress__fill,
+  .generation-progress__spinner {
     animation: none;
   }
 
