@@ -1,12 +1,36 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 import './SongViewModal.css';
 
-function SongViewModal({ song, onClose, onDuplicate, onEdit }) {
-  if (!song) return null;
+function SongViewModal({ song, onClose, onDuplicate, onEdit, onSongUpdated }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
+  const [editedOwnerId, setEditedOwnerId] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
-  const getStatusLabel = (status) => {
-    return status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unspecified';
-  };
+  useEffect(() => {
+    if (song) {
+      setEditedTitle(song.specific_title || '');
+      setEditedOwnerId(song.user_id);
+    }
+  }, [song]);
+
+  useEffect(() => {
+    // Fetch users when entering edit mode
+    if (isEditing && users.length === 0) {
+      api.get('/auth/users')
+        .then(response => {
+          setUsers(response.data.users || []);
+        })
+        .catch(err => {
+          console.error('Failed to fetch users:', err);
+        });
+    }
+  }, [isEditing, users.length]);
+
+  if (!song) return null;
 
   const handleDuplicate = () => {
     onDuplicate(song);
@@ -18,6 +42,41 @@ function SongViewModal({ song, onClose, onDuplicate, onEdit }) {
       onEdit(song);
       onClose();
     }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError('');
+
+    try {
+      const updates = {};
+      if (editedTitle !== song.specific_title) {
+        updates.specific_title = editedTitle;
+      }
+      if (editedOwnerId !== song.user_id) {
+        updates.user_id = editedOwnerId;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        const response = await api.put(`/songs/${song.id}`, updates);
+        if (onSongUpdated) {
+          onSongUpdated(response.data.song);
+        }
+      }
+
+      setIsEditing(false);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to save changes');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditedTitle(song.specific_title || '');
+    setEditedOwnerId(song.user_id);
+    setIsEditing(false);
+    setError('');
   };
 
   const isUploadedSong = song.source_type === 'uploaded';
@@ -49,8 +108,21 @@ function SongViewModal({ song, onClose, onDuplicate, onEdit }) {
       <div className="modal-content view-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>
-            {song.specific_title || 'Untitled Song'}
-            {song.version && <span className="song-version-badge">{song.version}</span>}
+            {isEditing ? (
+              <input
+                type="text"
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                className="edit-title-input"
+                placeholder="Song title"
+                autoFocus
+              />
+            ) : (
+              <>
+                {song.specific_title || 'Untitled Song'}
+                {song.version && <span className="song-version-badge">{song.version}</span>}
+              </>
+            )}
           </h2>
           <button className="modal-close" onClick={onClose}>
             ×
@@ -58,6 +130,25 @@ function SongViewModal({ song, onClose, onDuplicate, onEdit }) {
         </div>
 
         <div className="view-modal-body">
+          {error && <div className="alert alert-error">{error}</div>}
+
+          {isEditing && (
+            <div className="view-section">
+              <label className="view-label">Owner</label>
+              <select
+                value={editedOwnerId || ''}
+                onChange={(e) => setEditedOwnerId(parseInt(e.target.value))}
+                className="edit-owner-select"
+              >
+                {users.map(user => (
+                  <option key={user.id} value={user.id}>
+                    {user.username} ({user.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="view-row">
             {song.style_name && (
               <div className="view-section">
@@ -90,7 +181,7 @@ function SongViewModal({ song, onClose, onDuplicate, onEdit }) {
             </div>
           )}
 
-          {song.creator && (
+          {!isEditing && song.creator && (
             <div className="view-section">
               <label className="view-label">Creator</label>
               <div className="view-value">{song.creator}</div>
@@ -163,29 +254,59 @@ function SongViewModal({ song, onClose, onDuplicate, onEdit }) {
         </div>
 
         <div className="modal-footer">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={onClose}
-          >
-            Close
-          </button>
-          {isUploadedSong && onEdit && (
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handleEdit}
-            >
-              Edit
-            </button>
+          {isEditing ? (
+            <>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleCancelEdit}
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={onClose}
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setIsEditing(true)}
+              >
+                Edit
+              </button>
+              {isUploadedSong && onEdit && (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleEdit}
+                >
+                  Full Edit
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleDuplicate}
+              >
+                Duplicate
+              </button>
+            </>
           )}
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleDuplicate}
-          >
-            Duplicate
-          </button>
         </div>
       </div>
     </div>

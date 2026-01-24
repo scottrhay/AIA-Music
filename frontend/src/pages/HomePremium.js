@@ -167,6 +167,17 @@ function HomePremium({ onLogout }) {
     }
   };
 
+  const handleSongUpdated = (updatedSong) => {
+    // Update the song in the list
+    setSongs(prevSongs => prevSongs.map(s =>
+      s.id === updatedSong.id ? { ...s, ...updatedSong } : s
+    ));
+    // Also update the viewing song if open
+    if (viewingSong && viewingSong.id === updatedSong.id) {
+      setViewingSong({ ...viewingSong, ...updatedSong });
+    }
+  };
+
   const handleDuplicateSong = (song) => {
     // Close view modal if open
     setShowViewModal(false);
@@ -309,6 +320,7 @@ function HomePremium({ onLogout }) {
           onClose={handleViewModalClose}
           onDuplicate={handleDuplicateSong}
           onEdit={handleEditSong}
+          onSongUpdated={handleSongUpdated}
         />
       )}
 

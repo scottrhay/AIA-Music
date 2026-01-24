@@ -313,10 +313,6 @@ def update_song(song_id):
     if not song:
         return jsonify({'error': 'Song not found'}), 404
 
-    # Check ownership
-    if song.user_id != user_id:
-        return jsonify({'error': 'Unauthorized to update this song'}), 403
-
     data = request.get_json()
 
     # Validate style if provided
@@ -324,6 +320,14 @@ def update_song(song_id):
         style = Style.query.get(data['style_id'])
         if not style:
             return jsonify({'error': 'Style not found'}), 404
+
+    # Allow changing user_id (for reassigning songs)
+    if 'user_id' in data:
+        from app.models import User
+        new_owner = User.query.get(data['user_id'])
+        if not new_owner:
+            return jsonify({'error': 'User not found'}), 404
+        song.user_id = data['user_id']
 
     # Update fields
     if 'specific_title' in data:
