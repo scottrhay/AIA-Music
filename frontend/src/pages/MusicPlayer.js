@@ -172,7 +172,9 @@ function MusicPlayer({ onLogout, autoResume = false }) {
     if (currentPlaylist && currentPlaylist.songs && currentPlaylist.songs.length > 0) {
       const song = currentPlaylist.songs[currentSongIndex];
       if (song) {
-        const url = currentTrack === 1 ? song.download_url_1 : song.download_url_2;
+        const url = currentTrack === 1
+          ? (song.archived_url_1 || song.download_url_1)
+          : (song.archived_url_2 || song.download_url_2);
         if (audioRef.current && url) {
           audioRef.current.src = url;
           if (isPlaying && !isRestoring) {
@@ -211,8 +213,8 @@ function MusicPlayer({ onLogout, autoResume = false }) {
   };
 
   const currentSong = currentPlaylist?.songs?.[currentSongIndex];
-  const hasTrack1 = currentSong?.download_url_1;
-  const hasTrack2 = currentSong?.download_url_2;
+  const hasTrack1 = currentSong?.archived_url_1 || currentSong?.download_url_1;
+  const hasTrack2 = currentSong?.archived_url_2 || currentSong?.download_url_2;
 
   const handlePlayPause = () => {
     if (!audioRef.current) return;
@@ -476,8 +478,8 @@ function MusicPlayer({ onLogout, autoResume = false }) {
                 {currentPlaylist.songs.map((song, index) => (
                   <div
                     key={song.id}
-                    className={`playlist-track ${index === currentSongIndex ? 'active' : ''} ${!song.download_url_1 ? 'unavailable' : ''}`}
-                    onClick={() => song.download_url_1 && handleSongSelect(index)}
+                    className={`playlist-track ${index === currentSongIndex ? 'active' : ''} ${!(song.archived_url_1 || song.download_url_1) ? 'unavailable' : ''}`}
+                    onClick={() => (song.archived_url_1 || song.download_url_1) && handleSongSelect(index)}
                   >
                     <span className="track-number">
                       {index === currentSongIndex && isPlaying ? (
@@ -493,7 +495,7 @@ function MusicPlayer({ onLogout, autoResume = false }) {
                       <span className="track-title">{song.specific_title || 'Untitled'}</span>
                       <span className="track-artist">{song.creator}</span>
                     </div>
-                    {!song.download_url_1 && (
+                    {!(song.archived_url_1 || song.download_url_1) && (
                       <span className="track-status">Not Ready</span>
                     )}
                   </div>
