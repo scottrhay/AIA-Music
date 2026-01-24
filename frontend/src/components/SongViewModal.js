@@ -188,11 +188,11 @@ function SongViewModal({ song, onClose, onDuplicate, onEdit, onSongUpdated }) {
             </div>
           )}
 
-          {(song.download_url_1 || song.download_url_2) && (
+          {(song.archived_url_1 || song.download_url_1 || song.archived_url_2 || song.download_url_2) && (
             <div className="view-section">
               <label className="view-label">Audio</label>
               <div className="audio-players">
-                {song.download_url_1 && (
+                {(song.archived_url_1 || song.download_url_1) && (
                   <div className="audio-track">
                     <div className="audio-header">
                       <span className="track-label">Version 1</span>
@@ -202,7 +202,7 @@ function SongViewModal({ song, onClose, onDuplicate, onEdit, onSongUpdated }) {
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDownload(
-                            song.download_url_1,
+                            song.archived_url_1 || song.download_url_1,
                             `${(song.specific_title || 'song').replace(/[/\\?%*:|"<>]/g, '-')}_1_${song.version || 'v1'}.mp3`
                           );
                         }}
@@ -215,12 +215,12 @@ function SongViewModal({ song, onClose, onDuplicate, onEdit, onSongUpdated }) {
                       </button>
                     </div>
                     <audio controls className="audio-player" style={{ width: '100%' }}>
-                      <source src={song.download_url_1} type="audio/mpeg" />
+                      <source src={song.archived_url_1 || song.download_url_1} type="audio/mpeg" />
                       Your browser does not support the audio element.
                     </audio>
                   </div>
                 )}
-                {song.download_url_2 && (
+                {(song.archived_url_2 || song.download_url_2) && (
                   <div className="audio-track">
                     <div className="audio-header">
                       <span className="track-label">Version 2</span>
@@ -230,7 +230,7 @@ function SongViewModal({ song, onClose, onDuplicate, onEdit, onSongUpdated }) {
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDownload(
-                            song.download_url_2,
+                            song.archived_url_2 || song.download_url_2,
                             `${(song.specific_title || 'song').replace(/[/\\?%*:|"<>]/g, '-')}_2_${song.version || 'v1'}.mp3`
                           );
                         }}
@@ -243,7 +243,7 @@ function SongViewModal({ song, onClose, onDuplicate, onEdit, onSongUpdated }) {
                       </button>
                     </div>
                     <audio controls className="audio-player" style={{ width: '100%' }}>
-                      <source src={song.download_url_2} type="audio/mpeg" />
+                      <source src={song.archived_url_2 || song.download_url_2} type="audio/mpeg" />
                       Your browser does not support the audio element.
                     </audio>
                   </div>
