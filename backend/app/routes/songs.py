@@ -419,10 +419,9 @@ def delete_song(song_id):
         return jsonify({'error': 'Unauthorized to delete this song'}), 403
 
     try:
-        # Delete Azure Blob files if archived
-        if song.is_archived:
-            storage = get_storage_service()
-            storage.delete_song_files(song_id)
+        # Always attempt to delete audio files (in case they exist)
+        storage = get_storage_service()
+        storage.delete_song_files(song_id)
 
         db.session.delete(song)
         db.session.commit()
