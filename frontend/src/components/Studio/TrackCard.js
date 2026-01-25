@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 import './TrackCard.css';
 import StarRating from '../StarRating';
 import { updateSongRating, updateSong } from '../../services/songs';
@@ -450,4 +450,4 @@ function TrackRow({ trackNum, isPlaying, onPlay, onDownload, isDownloaded, playl
   );
 }
 
-export default TrackCard;
+export default memo(TrackCard);

@@ -65,25 +65,32 @@ function HomePremium({ onLogout }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
-  // Track polling check count with useRef to persist across renders
+  // Track polling state with refs to avoid re-render loops
   const pollCheckCount = React.useRef(0);
+  const pollingRef = React.useRef(false);
   const MAX_POLL_CHECKS = 60; // Stop after 60 checks (10 minutes at 10 second intervals)
+
+  // Check if we have submitted songs (computed, not state)
+  const hasSubmittedSongs = useMemo(() =>
+    songs.some(song => song.status === 'submitted'),
+    [songs]
+  );
 
   // Auto-refresh when there are songs in submitted status
   useEffect(() => {
-    const submittedSongs = songs.filter(song => song.status === 'submitted');
-
-    if (submittedSongs.length === 0) {
-      // Reset poll count when no submitted songs
+    // If no submitted songs, reset and don't poll
+    if (!hasSubmittedSongs) {
       pollCheckCount.current = 0;
+      pollingRef.current = false;
       return;
     }
 
-    // Stop polling after max checks
-    if (pollCheckCount.current >= MAX_POLL_CHECKS) {
-      console.log('Max poll checks reached, stopping status polling');
+    // Already polling or max checks reached
+    if (pollingRef.current || pollCheckCount.current >= MAX_POLL_CHECKS) {
       return;
     }
+
+    pollingRef.current = true;
 
     const intervalId = setInterval(async () => {
       pollCheckCount.current += 1;
@@ -91,9 +98,8 @@ function HomePremium({ onLogout }) {
 
       try {
         const result = await checkAllSubmitted();
-        setLastCheckedAt(Date.now()); // Track when we last checked
+        setLastCheckedAt(Date.now());
 
-        // Update songs in-place without full refresh
         if (result.results && result.results.length > 0) {
           setSongs(prevSongs => {
             let hasChanges = false;
@@ -103,30 +109,27 @@ function HomePremium({ onLogout }) {
                 hasChanges = true;
                 return { ...song, ...statusResult.song };
               }
-              // Mark as failed if max checks reached and still submitted
-              if (statusResult && statusResult.status === 'error' && pollCheckCount.current >= MAX_POLL_CHECKS) {
-                hasChanges = true;
-                return { ...song, status: 'failed' };
-              }
               return song;
             });
             return hasChanges ? updatedSongs : prevSongs;
           });
         }
 
-        // Stop if max checks reached
         if (pollCheckCount.current >= MAX_POLL_CHECKS) {
           console.log('Max poll checks reached');
           clearInterval(intervalId);
+          pollingRef.current = false;
         }
       } catch (error) {
         console.error('Error checking song status:', error);
       }
-    }, 10000); // Poll every 10 seconds
+    }, 10000);
 
-    return () => clearInterval(intervalId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [songs]);
+    return () => {
+      clearInterval(intervalId);
+      pollingRef.current = false;
+    };
+  }, [hasSubmittedSongs]);
 
   // Client-side filtering for star rating
   const filteredSongs = useMemo(() => {
