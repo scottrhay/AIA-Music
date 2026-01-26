@@ -176,7 +176,10 @@ function MusicPlayer({ onLogout, autoResume = false }) {
           ? (song.archived_url_1 || song.download_url_1)
           : (song.archived_url_2 || song.download_url_2);
         if (audioRef.current && url) {
-          audioRef.current.src = url;
+          // Only update src if URL changed to avoid unnecessary metadata reload
+          if (audioRef.current.src !== url) {
+            audioRef.current.src = url;
+          }
           if (isPlaying && !isRestoring) {
             audioRef.current.play().catch(console.error);
           }
@@ -245,11 +248,6 @@ function MusicPlayer({ onLogout, autoResume = false }) {
     setCurrentSongIndex(index);
     setCurrentTrack(1);
     setIsPlaying(true);
-    setTimeout(() => {
-      if (audioRef.current) {
-        audioRef.current.play().catch(console.error);
-      }
-    }, 100);
   };
 
   const handleTrackToggle = (trackNum) => {
@@ -291,11 +289,7 @@ function MusicPlayer({ onLogout, autoResume = false }) {
     if (currentPlaylist && currentSongIndex < currentPlaylist.songs.length - 1) {
       setCurrentSongIndex(currentSongIndex + 1);
       setCurrentTrack(1);
-      setTimeout(() => {
-        if (audioRef.current) {
-          audioRef.current.play().catch(console.error);
-        }
-      }, 100);
+      // isPlaying is already true, useEffect will handle play() when src updates
     } else {
       setIsPlaying(false);
     }
@@ -509,6 +503,7 @@ function MusicPlayer({ onLogout, autoResume = false }) {
       {/* Hidden audio element */}
       <audio
         ref={audioRef}
+        preload="metadata"
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleEnded}

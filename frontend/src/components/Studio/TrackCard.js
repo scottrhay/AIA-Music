@@ -377,8 +377,8 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
           )}
 
           {/* Hidden audio elements - prefer archived URLs */}
-          <audio ref={audioRef1} src={song.archived_url_1 || song.download_url_1} onEnded={() => handleAudioEnded(1)} style={{ display: 'none' }} />
-          <audio ref={audioRef2} src={song.archived_url_2 || song.download_url_2} onEnded={() => handleAudioEnded(2)} style={{ display: 'none' }} />
+          <audio ref={audioRef1} src={song.archived_url_1 || song.download_url_1} preload="metadata" onEnded={() => handleAudioEnded(1)} style={{ display: 'none' }} />
+          <audio ref={audioRef2} src={song.archived_url_2 || song.download_url_2} preload="metadata" onEnded={() => handleAudioEnded(2)} style={{ display: 'none' }} />
         </div>
       )}
     </div>
