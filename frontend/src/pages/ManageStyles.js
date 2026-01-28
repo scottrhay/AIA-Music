@@ -283,7 +283,7 @@ function ManageStyles({ onLogout }) {
                       style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)', resize: 'vertical' }}
                     />
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button className="btn btn-secondary" onClick={handleCancel} disabled={saving}>
                         Cancel
@@ -292,7 +292,7 @@ function ManageStyles({ onLogout }) {
                         {saving ? 'Saving...' : 'Save Changes'}
                       </button>
                     </div>
-                    <button className="btn btn-danger" onClick={handleDelete} disabled={saving}>
+                    <button className="btn btn-danger" onClick={handleDelete} disabled={saving} style={{ flexShrink: 0 }}>
                       Delete
                     </button>
                   </div>
