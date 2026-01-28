@@ -7,7 +7,7 @@ import { updateSongRating, updateSong } from '../../services/songs';
 function getGenerationProgress(startTime) {
   if (!startTime) return { progress: 10, stage: 'Composing...' };
 
-  const elapsed = (Date.now() - new Date(startTime).getTime()) / 1000; // seconds
+  const elapsed = Math.max(0, (Date.now() - new Date(startTime).getTime()) / 1000); // seconds (never negative)
 
   if (elapsed < 30) {
     // 0-30s: 10-40% "Composing..."
