@@ -1,10 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import StarRating from './StarRating';
 import './SongCard.css';
 
 function SongCard({ song, onView, onDelete, onDuplicate, onUpdateTitle, onRatingChange }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(song.specific_title || '');
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef(null);
+
+  // Stop audio when component unmounts
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
+  }, []);
+
+  const handlePlayPause = (e) => {
+    e.stopPropagation();
+    if (!audioRef.current) return;
+
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const handleAudioEnded = () => {
+    setIsPlaying(false);
+  };
   const getStatusClass = (status) => {
     switch (status) {
       case 'create':
@@ -110,32 +138,52 @@ function SongCard({ song, onView, onDelete, onDuplicate, onUpdateTitle, onRating
 
         <p className="song-lyrics">{truncateText(song.specific_lyrics)}</p>
 
-        {/* Show audio player and download link for completed songs */}
-        {song.status === 'completed' && (song.download_url || song.download_url_1) && (
+        {/* Show large play button for completed songs */}
+        {song.status === 'completed' && (song.download_url || song.download_url_1 || song.archived_url) && (
           <div className="song-audio-section" onClick={(e) => e.stopPropagation()}>
-            <div className="audio-track">
-              <div className="audio-header">
-                {song.track_number && song.sibling_group_id && (
-                  <span className="track-label">Variation {song.track_number}</span>
-                )}
-                <a
-                  href={song.download_url || song.download_url_1}
-                  download
-                  className="download-link"
-                  title="Download"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
+            <button className={`song-play-button ${isPlaying ? 'playing' : ''}`} onClick={handlePlayPause}>
+              {isPlaying ? (
+                <>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="4" width="4" height="16"/>
+                    <rect x="14" y="4" width="4" height="16"/>
                   </svg>
-                </a>
-              </div>
-              <audio controls className="audio-player">
-                <source src={song.download_url || song.download_url_1} type="audio/mpeg" />
-                Your browser does not support the audio element.
-              </audio>
-            </div>
+                  <span className="play-text">Pause</span>
+                </>
+              ) : (
+                <>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7L8 5z"/>
+                  </svg>
+                  <span className="play-text">
+                    {song.track_number && song.sibling_group_id ? `Play Variation ${song.track_number}` : 'Play Track'}
+                  </span>
+                </>
+              )}
+            </button>
+
+            <a
+              href={song.archived_url || song.download_url || song.download_url_1}
+              download
+              className="song-download-link"
+              title="Download"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Download
+            </a>
+
+            {/* Hidden audio element */}
+            <audio
+              ref={audioRef}
+              src={song.archived_url || song.download_url || song.download_url_1}
+              preload="metadata"
+              onEnded={handleAudioEnded}
+              style={{ display: 'none' }}
+            />
           </div>
         )}
 
