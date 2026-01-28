@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TopBar from '../components/Studio/TopBar';
 import { getStyles, createStyle, updateStyle, deleteStyle, getStyleSongsCount } from '../services/styles';
@@ -7,6 +7,7 @@ import './ManageStyles.css';
 
 function ManageStyles({ onLogout }) {
   const navigate = useNavigate();
+  const detailsRef = useRef(null);
   const [styles, setStyles] = useState([]);
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -49,6 +50,11 @@ function ManageStyles({ onLogout }) {
     setIsEditing(false);
     setIsCreating(false);
     setError('');
+
+    // Scroll to top of details panel
+    if (detailsRef.current) {
+      detailsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   const handleEdit = () => {
@@ -203,7 +209,7 @@ function ManageStyles({ onLogout }) {
             )}
           </div>
 
-          <div className="style-details">
+          <div className="style-details" ref={detailsRef}>
             {isCreating ? (
               <>
                 <div className="details-header">
@@ -283,7 +289,7 @@ function ManageStyles({ onLogout }) {
               <>
                 <div className="details-header">
                   <h2>{selectedStyle.name}</h2>
-                  <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
+                  <div style={{ display: 'flex', gap: 'var(--spacing-2)', flexShrink: 0 }}>
                     <button className="btn btn-secondary" onClick={handleEdit}>
                       Edit
                     </button>
