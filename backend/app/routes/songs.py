@@ -372,45 +372,6 @@ def update_song(song_id):
         return jsonify({'error': str(e)}), 500
 
 
-@bp.route('/<int:song_id>/recreate', methods=['POST'])
-@jwt_required()
-def recreate_song(song_id):
-    """Recreate/regenerate an existing song."""
-    user_id = get_jwt_identity()
-    song = Song.query.get(song_id)
-
-    if not song:
-        return jsonify({'error': 'Song not found'}), 404
-
-    # Check ownership
-    if song.user_id != user_id:
-        return jsonify({'error': 'Unauthorized to recreate this song'}), 403
-
-    try:
-        # Reset download URLs and submit to Suno
-        song.download_url_1 = None
-        song.download_url_2 = None
-        song.status = 'create'
-
-        # Access style relationship before commit to ensure it's loaded
-        _ = song.style
-
-        db.session.commit()
-
-        # Submit to Suno API
-        _submit_to_suno(song)
-
-        return jsonify({
-            'message': 'Song submitted for regeneration',
-            'song': song.to_dict(include_user=True, include_style=True)
-        }), 200
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(f"Error in recreate_song: {str(e)}", exc_info=True)
-        import traceback
-        return jsonify({'error': str(e), 'traceback': traceback.format_exc()}), 500
-
-
 @bp.route('/<int:song_id>', methods=['DELETE'])
 @jwt_required()
 def delete_song(song_id):

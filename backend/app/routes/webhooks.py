@@ -199,6 +199,11 @@ def suno_callback():
 
     current_app.logger.info(f"Suno callback: Found song {original_song.id} for task_id {task_id}")
 
+    # Idempotency check: prevent duplicate processing if webhook fires multiple times
+    if original_song.status == 'completed':
+        current_app.logger.info(f"Suno callback: Song {original_song.id} already processed (status=completed)")
+        return jsonify({'message': 'Already processed', 'song_id': original_song.id}), 200
+
     # Check status
     status = data.get('status', '').lower()
     msg = data.get('msg', '') or data.get('message', '')
