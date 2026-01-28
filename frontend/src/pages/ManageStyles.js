@@ -32,16 +32,25 @@ function ManageStyles({ onLogout }) {
 
   const loadStyles = async () => {
     try {
+      console.time('Load Styles Total');
       setLoading(true);
+
+      console.time('API Call');
       const data = await getStyles();
+      console.timeEnd('API Call');
+
+      console.time('State Update');
       setStyles(data.styles || []);
       if (data.styles?.length > 0 && !selectedStyle) {
         setSelectedStyle(data.styles[0]);
       }
+      console.timeEnd('State Update');
     } catch (err) {
+      console.error('Load styles error:', err);
       setError('Failed to load styles');
     } finally {
       setLoading(false);
+      console.timeEnd('Load Styles Total');
     }
   };
 
