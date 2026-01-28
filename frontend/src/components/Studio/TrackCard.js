@@ -39,8 +39,10 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
   const audioRef1 = useRef(null);
   const audioRef2 = useRef(null);
 
-  // Check if song is generating
-  const isGenerating = song.status === 'submitted' || (song.status === 'completed' && !song.download_url_1 && !song.download_url_2 && !song.archived_url_1 && !song.archived_url_2);
+  // Check if song is generating - use new single-track fields with legacy fallback
+  const effectiveDownloadUrl = song.download_url || song.download_url_1;
+  const effectiveArchivedUrl = song.archived_url || song.archived_url_1;
+  const isGenerating = song.status === 'submitted' || (song.status === 'completed' && !effectiveDownloadUrl && !effectiveArchivedUrl);
 
   // Update progress every second for generating songs
   useEffect(() => {
@@ -119,7 +121,8 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
     return lines.slice(0, maxLines).join('\n') + '...';
   };
 
-  const hasAudio = song.status === 'completed' && (song.download_url_1 || song.download_url_2 || song.archived_url_1 || song.archived_url_2);
+  // Check for audio - prefer new single-track fields, fall back to legacy
+  const hasAudio = song.status === 'completed' && (effectiveDownloadUrl || effectiveArchivedUrl || song.download_url_2 || song.archived_url_2);
 
   const getStatusInfo = (status) => {
     if (status === 'completed' && !hasAudio) {
@@ -345,22 +348,25 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
       {/* Track Rows - only show if has audio */}
       {hasAudio && (
         <div className="track-card__tracks" onClick={(e) => e.stopPropagation()}>
-          {(song.download_url_1 || song.archived_url_1) && (
+          {/* Primary track - uses new single-track fields with legacy fallback */}
+          {(effectiveDownloadUrl || effectiveArchivedUrl) && (
             <TrackRow
-              trackNum={1}
+              trackNum={song.track_number || 1}
               isPlaying={playingTrack === 1}
               onPlay={(e) => handlePlayTrack(e, 1)}
               onDownload={() => handleDownload(
-                song.archived_url_1 || song.download_url_1,
-                `${(song.specific_title || 'song').replace(/[/\\?%*:|"<>]/g, '-')}_1_${song.version || 'v1'}.mp3`,
+                effectiveArchivedUrl || effectiveDownloadUrl,
+                `${(song.specific_title || 'song').replace(/[/\\?%*:|"<>]/g, '-')}_${song.track_number || 1}_${song.version || 'v1'}.mp3`,
                 1
               )}
-              isDownloaded={song.downloaded_url_1}
+              isDownloaded={song.downloaded || song.downloaded_url_1}
               playlists={song.playlists}
               onAssignPlaylist={() => onAssignPlaylist && onAssignPlaylist(song)}
+              showVariation={song.sibling_group_id}
             />
           )}
-          {(song.download_url_2 || song.archived_url_2) && (
+          {/* Legacy: show second track if this is an old dual-track song */}
+          {!song.download_url && (song.download_url_2 || song.archived_url_2) && (
             <TrackRow
               trackNum={2}
               isPlaying={playingTrack === 2}
@@ -376,9 +382,11 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
             />
           )}
 
-          {/* Hidden audio elements - prefer archived URLs */}
-          <audio ref={audioRef1} src={song.archived_url_1 || song.download_url_1} preload="metadata" onEnded={() => handleAudioEnded(1)} style={{ display: 'none' }} />
-          <audio ref={audioRef2} src={song.archived_url_2 || song.download_url_2} preload="metadata" onEnded={() => handleAudioEnded(2)} style={{ display: 'none' }} />
+          {/* Hidden audio elements */}
+          <audio ref={audioRef1} src={effectiveArchivedUrl || effectiveDownloadUrl} preload="metadata" onEnded={() => handleAudioEnded(1)} style={{ display: 'none' }} />
+          {!song.download_url && (song.download_url_2 || song.archived_url_2) && (
+            <audio ref={audioRef2} src={song.archived_url_2 || song.download_url_2} preload="metadata" onEnded={() => handleAudioEnded(2)} style={{ display: 'none' }} />
+          )}
         </div>
       )}
     </div>
@@ -386,7 +394,7 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
 }
 
 // Individual Track Row Component
-function TrackRow({ trackNum, isPlaying, onPlay, onDownload, isDownloaded, playlists, onAssignPlaylist }) {
+function TrackRow({ trackNum, isPlaying, onPlay, onDownload, isDownloaded, playlists, onAssignPlaylist, showVariation }) {
   const hasPlaylist = playlists && playlists.length > 0;
   const playlistNames = hasPlaylist ? playlists.map(p => p.name).join(', ') : '';
 
@@ -407,7 +415,7 @@ function TrackRow({ trackNum, isPlaying, onPlay, onDownload, isDownloaded, playl
       </button>
 
       {/* Track Name */}
-      <span className="track-row__name">Track {trackNum}</span>
+      <span className="track-row__name">{showVariation ? `Variation ${trackNum}` : `Track ${trackNum}`}</span>
 
       {/* Playlist Indicator */}
       <button

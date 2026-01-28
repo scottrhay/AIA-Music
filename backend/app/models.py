@@ -97,14 +97,22 @@ class Song(db.Model):
     style_id = db.Column(db.Integer, db.ForeignKey('styles.id', ondelete='SET NULL'))
     vocal_gender = db.Column(vocal_gender_enum)
     voice_name = db.Column(db.String(255))  # Azure Speech voice name
+    # New single-track fields (preferred)
+    download_url = db.Column(db.String(1000))  # Single audio URL for this song
+    downloaded = db.Column(db.Boolean, default=False)  # Has been downloaded
+    archived_url = db.Column(db.String(1000))  # Permanent local copy
+    sibling_group_id = db.Column(db.String(255), index=True)  # Links songs from same Suno generation
+    track_number = db.Column(db.Integer, default=1)  # 1 or 2 - which variation from Suno
+    
+    # Legacy dual-track fields (deprecated - for backward compatibility)
     download_url_1 = db.Column(db.String(1000))
     downloaded_url_1 = db.Column(db.Boolean, default=False)
     download_url_2 = db.Column(db.String(1000))
     downloaded_url_2 = db.Column(db.Boolean, default=False)
-    suno_task_id = db.Column(db.String(255), index=True)  # Suno API task ID
-    # Local storage for permanent audio archive
-    archived_url_1 = db.Column(db.String(1000))  # Permanent local copy
+    archived_url_1 = db.Column(db.String(1000))
     archived_url_2 = db.Column(db.String(1000))
+    
+    suno_task_id = db.Column(db.String(255), index=True)  # Suno API task ID
     is_archived = db.Column(db.Boolean, default=False, index=True)
     archived_at = db.Column(db.DateTime)
     file_size_bytes = db.Column(db.Integer)  # Total size of both tracks
@@ -113,6 +121,11 @@ class Song(db.Model):
 
     def to_dict(self, include_user=False, include_style=True, include_playlists=False):
         """Convert song to dictionary."""
+        # Use new single-track fields, fall back to legacy fields for old songs
+        effective_download_url = self.download_url or self.download_url_1
+        effective_archived_url = self.archived_url or self.archived_url_1
+        effective_downloaded = self.downloaded if self.downloaded is not None else (self.downloaded_url_1 or False)
+        
         data = {
             'id': self.id,
             'source_type': self.source_type or 'suno',
@@ -124,13 +137,20 @@ class Song(db.Model):
             'prompt_to_generate': self.prompt_to_generate,
             'vocal_gender': self.vocal_gender,
             'voice_name': self.voice_name,
-            'download_url_1': self.download_url_1,
-            'downloaded_url_1': self.downloaded_url_1 or False,
-            'download_url_2': self.download_url_2,
-            'downloaded_url_2': self.downloaded_url_2 or False,
+            # New single-track fields
+            'download_url': effective_download_url,
+            'downloaded': effective_downloaded,
+            'archived_url': effective_archived_url,
+            'sibling_group_id': self.sibling_group_id,
+            'track_number': self.track_number or 1,
+            # Legacy fields for backward compatibility (deprecated)
+            'download_url_1': effective_download_url,  # Map to single URL for old clients
+            'downloaded_url_1': effective_downloaded,
+            'download_url_2': self.download_url_2 if not self.download_url else None,  # Only if legacy data
+            'downloaded_url_2': self.downloaded_url_2 if not self.download_url else False,
+            'archived_url_1': effective_archived_url,
+            'archived_url_2': self.archived_url_2 if not self.archived_url else None,
             'suno_task_id': self.suno_task_id,
-            'archived_url_1': self.archived_url_1,
-            'archived_url_2': self.archived_url_2,
             'is_archived': self.is_archived or False,
             'archived_at': self.archived_at.isoformat() if self.archived_at else None,
             'file_size_bytes': self.file_size_bytes,

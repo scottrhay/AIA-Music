@@ -130,6 +130,18 @@ function Home({ onLogout }) {
     }
   };
 
+  const handleRatingChange = async (songId, rating) => {
+    try {
+      await updateSong(songId, { star_rating: rating });
+      // Update locally without full reload for better UX
+      setSongs(prev => prev.map(song => 
+        song.id === songId ? { ...song, star_rating: rating } : song
+      ));
+    } catch (error) {
+      console.error('Error updating song rating:', error);
+    }
+  };
+
   const handleModalClose = (shouldRefresh) => {
     setShowModal(false);
     setEditingSong(null);
@@ -245,6 +257,7 @@ function Home({ onLogout }) {
                 onDelete={handleDeleteSong}
                 onDuplicate={handleDuplicateSong}
                 onUpdateTitle={handleUpdateTitle}
+                onRatingChange={handleRatingChange}
               />
             ))}
           </div>

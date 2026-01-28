@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import StarRating from './StarRating';
 import './SongCard.css';
 
-function SongCard({ song, onView, onDelete, onDuplicate, onUpdateTitle }) {
+function SongCard({ song, onView, onDelete, onDuplicate, onUpdateTitle, onRatingChange }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(song.specific_title || '');
   const getStatusClass = (status) => {
@@ -109,55 +110,43 @@ function SongCard({ song, onView, onDelete, onDuplicate, onUpdateTitle }) {
 
         <p className="song-lyrics">{truncateText(song.specific_lyrics)}</p>
 
-        {/* Show audio players and download links for completed songs */}
-        {song.status === 'completed' && (song.download_url_1 || song.download_url_2) && (
+        {/* Show audio player and download link for completed songs */}
+        {song.status === 'completed' && (song.download_url || song.download_url_1) && (
           <div className="song-audio-section" onClick={(e) => e.stopPropagation()}>
-            {song.download_url_1 && (
-              <div className="audio-track">
-                <div className="audio-header">
-                  <span className="track-label">Version 1</span>
-                  <a
-                    href={song.download_url_1}
-                    download
-                    className="download-link"
-                    title="Download Version 1"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="7 10 12 15 17 10"></polyline>
-                      <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                  </a>
-                </div>
-                <audio controls className="audio-player">
-                  <source src={song.download_url_1} type="audio/mpeg" />
-                  Your browser does not support the audio element.
-                </audio>
+            <div className="audio-track">
+              <div className="audio-header">
+                {song.track_number && song.sibling_group_id && (
+                  <span className="track-label">Variation {song.track_number}</span>
+                )}
+                <a
+                  href={song.download_url || song.download_url_1}
+                  download
+                  className="download-link"
+                  title="Download"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                </a>
               </div>
-            )}
-            {song.download_url_2 && (
-              <div className="audio-track">
-                <div className="audio-header">
-                  <span className="track-label">Version 2</span>
-                  <a
-                    href={song.download_url_2}
-                    download
-                    className="download-link"
-                    title="Download Version 2"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="7 10 12 15 17 10"></polyline>
-                      <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                  </a>
-                </div>
-                <audio controls className="audio-player">
-                  <source src={song.download_url_2} type="audio/mpeg" />
-                  Your browser does not support the audio element.
-                </audio>
-              </div>
-            )}
+              <audio controls className="audio-player">
+                <source src={song.download_url || song.download_url_1} type="audio/mpeg" />
+                Your browser does not support the audio element.
+              </audio>
+            </div>
+          </div>
+        )}
+
+        {/* Star Rating */}
+        {song.status === 'completed' && (
+          <div className="song-rating" onClick={(e) => e.stopPropagation()}>
+            <StarRating
+              rating={song.star_rating || 0}
+              onRatingChange={(rating) => onRatingChange && onRatingChange(song.id, rating)}
+              size="small"
+            />
           </div>
         )}
 

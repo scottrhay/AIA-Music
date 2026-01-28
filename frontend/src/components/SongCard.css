@@ -102,6 +102,14 @@
   min-height: 3rem;
 }
 
+/* Star Rating Section */
+.song-rating {
+  margin: 0.75rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .song-meta {
   display: flex;
   flex-direction: column;

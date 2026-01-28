@@ -11,7 +11,7 @@ bp = Blueprint('songs', __name__)
 
 
 def _archive_song_to_storage(song):
-    """Archive song audio files to local storage."""
+    """Archive song audio file to local storage."""
     storage = get_storage_service()
 
     if not storage.is_configured():
@@ -22,24 +22,31 @@ def _archive_song_to_storage(song):
         current_app.logger.info(f"Song {song.id} already archived")
         return True
 
+    # Get the effective download URL (new field or legacy fallback)
+    download_url = song.download_url or song.download_url_1
+
+    if not download_url:
+        current_app.logger.warning(f"Song {song.id} has no download URL to archive")
+        return False
+
     try:
+        # Archive single track (pass None for second URL)
         result = storage.archive_song_tracks(
             song.id,
-            song.download_url_1,
-            song.download_url_2
+            download_url,
+            None  # No second URL in new single-track model
         )
 
-        if result['local_url_1'] or result['local_url_2']:
-            song.archived_url_1 = result['local_url_1']
-            song.archived_url_2 = result['local_url_2']
+        if result.get('local_url_1'):
+            song.archived_url = result['local_url_1']
             song.is_archived = True
             song.archived_at = datetime.utcnow()
-            song.file_size_bytes = result['total_size']
+            song.file_size_bytes = result.get('total_size', 0)
             db.session.commit()
             current_app.logger.info(f"Song {song.id} archived locally: {result}")
             return True
         else:
-            current_app.logger.warning(f"No tracks archived for song {song.id}")
+            current_app.logger.warning(f"No track archived for song {song.id}")
             return False
 
     except Exception as e:
@@ -442,9 +449,13 @@ def get_stats():
     base_query = Song.query if show_all_users else Song.query.filter_by(user_id=user_id)
 
     # Count completed songs that actually have audio files
+    # Check both new (download_url) and legacy (download_url_1) fields
     completed_with_audio = base_query.filter(
         Song.status == 'completed',
-        db.or_(Song.download_url_1.isnot(None), Song.download_url_2.isnot(None))
+        db.or_(
+            Song.download_url.isnot(None),
+            Song.download_url_1.isnot(None)
+        )
     ).count()
 
     stats = {
@@ -460,7 +471,10 @@ def get_stats():
 
 
 def _check_suno_status(song):
-    """Check the status of a song generation task with Suno API."""
+    """Check the status of a song generation task with Suno API.
+    
+    Creates separate song records for each audio track returned.
+    """
     suno_api_key = os.getenv('SUNO_API_KEY')
 
     if not suno_api_key:
@@ -497,21 +511,56 @@ def _check_suno_status(song):
             suno_data = response_data.get('sunoData', [])
 
             if suno_data and len(suno_data) > 0:
-                # Get first track
-                if len(suno_data) >= 1:
-                    song.download_url_1 = suno_data[0].get('audioUrl')
-                # Get second track if available
-                if len(suno_data) >= 2:
-                    song.download_url_2 = suno_data[1].get('audioUrl')
+                created_songs = []
+                task_id = song.suno_task_id
+                
+                for idx, track_data in enumerate(suno_data):
+                    audio_url = track_data.get('audioUrl')
+                    if not audio_url:
+                        continue
+                    
+                    track_number = idx + 1
+                    
+                    if idx == 0:
+                        # Update the original song with the first track
+                        song.download_url = audio_url
+                        song.sibling_group_id = task_id
+                        song.track_number = track_number
+                        song.status = 'completed'
+                        created_songs.append(song)
+                    else:
+                        # Create a new song for additional tracks
+                        new_song = Song(
+                            user_id=song.user_id,
+                            source_type=song.source_type,
+                            status='completed',
+                            specific_title=f"{song.specific_title or 'Untitled'} (v{track_number})",
+                            version=song.version,
+                            specific_lyrics=song.specific_lyrics,
+                            prompt_to_generate=song.prompt_to_generate,
+                            style_id=song.style_id,
+                            vocal_gender=song.vocal_gender,
+                            voice_name=song.voice_name,
+                            download_url=audio_url,
+                            sibling_group_id=task_id,
+                            track_number=track_number,
+                            suno_task_id=task_id
+                        )
+                        db.session.add(new_song)
+                        created_songs.append(new_song)
 
-                song.status = 'completed'
                 db.session.commit()
-                current_app.logger.info(f"Song {song.id} completed with URLs: {song.download_url_1}, {song.download_url_2}")
+                current_app.logger.info(f"Created/updated {len(created_songs)} songs for task {task_id}")
 
-                # Auto-archive to Azure Blob Storage for permanent storage
-                _archive_song_to_storage(song)
+                # Auto-archive each song
+                for s in created_songs:
+                    _archive_song_to_storage(s)
 
-                return {'status': 'completed', 'song': song.to_dict()}
+                return {
+                    'status': 'completed',
+                    'songs': [s.to_dict() for s in created_songs],
+                    'song': song.to_dict()  # Legacy: return original song
+                }
             else:
                 current_app.logger.warning(f"Song {song.id} marked SUCCESS but no audio URLs found")
                 return {'status': 'pending', 'message': 'Waiting for audio URLs'}
@@ -786,7 +835,7 @@ def upload_song():
 
         # Update song with file info
         actual_size = file_path.stat().st_size
-        song.archived_url_1 = f"{storage.base_url}/songs/{song.id}/{filename}"
+        song.archived_url = f"{storage.base_url}/songs/{song.id}/{filename}"
         song.file_size_bytes = actual_size
 
         db.session.commit()
