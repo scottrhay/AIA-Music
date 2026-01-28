@@ -40,9 +40,13 @@ function ManageStyles({ onLogout }) {
       console.timeEnd('API Call');
 
       console.time('State Update');
+      console.log('Styles loaded:', data.styles?.length || 0);
       setStyles(data.styles || []);
       if (data.styles?.length > 0 && !selectedStyle) {
+        console.log('Auto-selecting first style:', data.styles[0].name);
         setSelectedStyle(data.styles[0]);
+      } else if (!data.styles?.length) {
+        console.warn('No styles found');
       }
       console.timeEnd('State Update');
     } catch (err) {
