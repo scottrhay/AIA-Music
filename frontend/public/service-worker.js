@@ -3,7 +3,7 @@
  * Provides offline support and audio caching for the PWA
  */
 
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const STATIC_CACHE = `aiamusic-static-${CACHE_VERSION}`;
 const AUDIO_CACHE = `aiamusic-audio-${CACHE_VERSION}`;
 const API_CACHE = `aiamusic-api-${CACHE_VERSION}`;
@@ -82,13 +82,17 @@ self.addEventListener('fetch', (event) => {
     return; // Don't intercept, let browser handle directly
   }
 
-  // JS/CSS files - network first to get latest updates
-  if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+  // HTML/JS/CSS files - network first to get latest updates
+  if (url.pathname.endsWith('.html') ||
+      url.pathname.endsWith('.js') ||
+      url.pathname.endsWith('.css') ||
+      url.pathname === '/' ||
+      request.mode === 'navigate') {
     event.respondWith(networkFirstStrategy(request, STATIC_CACHE));
     return;
   }
 
-  // Static assets - cache first, fall back to network
+  // Other static assets (images, fonts) - cache first, fall back to network
   event.respondWith(cacheFirstStrategy(request, STATIC_CACHE));
 });
 
