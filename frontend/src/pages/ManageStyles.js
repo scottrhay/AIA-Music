@@ -210,12 +210,30 @@ function ManageStyles({ onLogout }) {
                   <div
                     key={style.id}
                     className={`style-item ${selectedStyle?.id === style.id ? 'active' : ''}`}
-                    onClick={() => handleSelectStyle(style)}
                   >
-                    <div className="style-item-name">{style.name}</div>
-                    <div className="style-item-meta">
-                      {style.style_prompt ? `${style.style_prompt.substring(0, 40)}...` : 'No prompt'}
+                    <div 
+                      className="style-item-content"
+                      onClick={() => handleSelectStyle(style)}
+                    >
+                      <div className="style-item-name">{style.name}</div>
+                      <div className="style-item-meta">
+                        {style.style_prompt ? `${style.style_prompt.substring(0, 40)}...` : 'No prompt'}
+                      </div>
                     </div>
+                    <button
+                      className="style-item-delete"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectStyle(style);
+                        setTimeout(() => handleDelete(), 50);
+                      }}
+                      title="Delete style"
+                      aria-label="Delete style"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2 4h12M5 4V3a1 1 0 011-1h4a1 1 0 011 1v1m1 0v10a1 1 0 01-1 1H5a1 1 0 01-1-1V4h8zM6 7v5M10 7v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
                   </div>
                 ))}
               </div>

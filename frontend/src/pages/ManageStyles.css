@@ -423,3 +423,54 @@
   padding: var(--spacing-5);
   border-top: 1px solid var(--color-neutral-200);
 }
+
+/* Style item with delete button */
+.style-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+}
+
+.style-item-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  min-width: 0; /* Allow text truncation */
+}
+
+.style-item-delete {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-neutral-400);
+  border-radius: var(--radius-base);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  opacity: 0;
+}
+
+.style-item:hover .style-item-delete {
+  opacity: 1;
+}
+
+.style-item-delete:hover {
+  background: var(--color-red-50);
+  color: var(--color-red-600);
+}
+
+.style-item-delete:active {
+  transform: scale(0.95);
+}
+
+.style-item-delete svg {
+  width: 16px;
+  height: 16px;
+}
