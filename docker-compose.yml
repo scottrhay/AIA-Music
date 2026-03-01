@@ -28,7 +28,7 @@ services:
 
       # JWT Configuration
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-      - JWT_ACCESS_TOKEN_EXPIRES=86400
+      - JWT_ACCESS_TOKEN_EXPIRES=62208000
 
       # CORS Configuration
       - CORS_ORIGINS=https://music.aiacopilot.com,http://localhost:3000
@@ -46,6 +46,7 @@ services:
       - MICROSOFT_TENANT_ID=${MICROSOFT_TENANT_ID:-consumers}
       - MICROSOFT_REDIRECT_URI=https://music.aiacopilot.com/api/v1/auth/microsoft/callback
       - FRONTEND_URL=https://music.aiacopilot.com
+      - ROKU_SECRET_KEY=${ROKU_SECRET_KEY}
 
     volumes:
       # Mount logs directory for persistence
