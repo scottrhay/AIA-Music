@@ -731,3 +731,96 @@
     transform: none;
   }
 }
+
+/* ─── Generating state: elapsed timer, cancel, "taking long" ─────────────── */
+
+/* Replace percent display with elapsed timer */
+.generation-progress__elapsed {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-neutral-500);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+}
+
+/* Footer: space hint left, (checked + cancel) right */
+.generation-progress__footer {
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.generation-progress__hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-neutral-400);
+  font-style: italic;
+  flex: 1;
+}
+
+.generation-progress__hint--slow {
+  color: #b45309;
+  font-style: normal;
+  font-weight: 500;
+}
+
+.generation-progress__footer-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  flex-shrink: 0;
+}
+
+.generation-progress__checked {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  font-size: var(--font-size-xs);
+  color: var(--color-neutral-500);
+}
+
+.generation-progress__cancel {
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  font-size: var(--font-size-xs);
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.5;
+}
+
+.generation-progress__cancel:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+/* "Taking longer than expected" variant */
+.generation-progress--slow {
+  border-color: #fbbf24;
+  background: #fffbeb;
+}
+
+.generation-progress--slow .generation-progress__fill {
+  background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 50%, #f59e0b 100%);
+  background-size: 200% 100%;
+}
+
+.generation-progress--slow .generation-progress__stage {
+  color: #b45309;
+}
+
+.generation-progress--slow .generation-progress__elapsed {
+  color: #b45309;
+}
+
+.generation-progress--slow .generation-progress__cancel {
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+.generation-progress--slow .generation-progress__cancel:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: #fef2f2;
+}

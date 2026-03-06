@@ -1,0 +1,96 @@
+# AIA Music — Development / Staging / Test
+# Usage:
+#   docker compose -f docker-compose.dev.yml up -d         # Start staging
+#   docker compose -f docker-compose.dev.yml run --rm test  # Run tests
+#   docker compose -f docker-compose.dev.yml down -v        # Teardown
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: music_dev
+      POSTGRES_USER: music_user
+      POSTGRES_PASSWORD: music_dev_2026
+    ports:
+      - "${MUSIC_DB_PORT:-5438}:5432"
+    volumes:
+      - music_pgdata_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U music_user -d music_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${MUSIC_API_PORT:-8006}:5000"
+    networks:
+      - default
+      - staging-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.music-api.rule=Host(`music.stage.local`)"
+      - "traefik.http.routers.music-api.entrypoints=web"
+      - "traefik.http.services.music-api.loadbalancer.server.port=5000"
+    environment:
+      FLASK_APP: run.py
+      FLASK_ENV: development
+      SECRET_KEY: dev-secret-key-not-for-production
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: music_dev
+      DB_USER: music_user
+      DB_PASSWORD: music_dev_2026
+      JWT_SECRET_KEY: dev-jwt-secret
+      JWT_ACCESS_TOKEN_EXPIRES: "86400"
+      CORS_ORIGINS: "http://localhost:3000"
+      API_PREFIX: /api/v1
+      AUDIO_STORAGE_PATH: /app/data/audio
+      AUDIO_BASE_URL: /audio
+      SUNO_API_KEY: ${SUNO_API_KEY:-}
+      SUNO_API_URL: ${SUNO_API_URL:-https://api.sunoapi.com}
+    volumes:
+      - music_audio_dev:/app/data/audio
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: music_dev
+      DB_USER: music_user
+      DB_PASSWORD: music_dev_2026
+      API_BASE_URL: http://backend:5000
+      SECRET_KEY: test-secret
+      JWT_SECRET_KEY: test-jwt-secret
+      FLASK_APP: run.py
+      API_PREFIX: /api/v1
+    depends_on:
+      backend:
+        condition: service_healthy
+    profiles: ["test"]
+
+volumes:
+  music_pgdata_dev:
+  music_audio_dev:
+
+networks:
+  staging-net:
+    external: true

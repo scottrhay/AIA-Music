@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="apiBaseUrl" type="string" />
+        <field id="authToken" type="string" />
+    </interface>
+
+    <children>
+        <!-- Playlist Selector (shown first) -->
+        <PlaylistSelector
+            id="playlistSelector"
+            visible="true"
+            translation="[0, 0]"
+        />
+        
+        <!-- Audio Player (shown after playlist selected) -->
+        <AudioPlayer
+            id="audioPlayer"
+            visible="false"
+            translation="[0, 0]"
+        />
+    </children>
+
+    <script type="text/brightscript">
+    <![CDATA[
+        sub init()
+            m.playlistSelector = m.top.findNode("playlistSelector")
+            m.audioPlayer = m.top.findNode("audioPlayer")
+            
+            ' Listen for playlist selection
+            m.playlistSelector.observeField("playlistSelected", "onPlaylistSelected")
+            
+            ' Listen for back button from player
+            m.audioPlayer.observeField("backPressed", "onBackFromPlayer")
+            
+            ' Pass API config to children when available
+            m.top.observeField("apiBaseUrl", "onApiConfigReady")
+            m.top.observeField("authToken", "onApiConfigReady")
+        end sub
+        
+        sub onApiConfigReady()
+            ' Pass config to playlist selector
+            if m.top.apiBaseUrl <> "" and m.top.authToken <> ""
+                m.playlistSelector.apiBaseUrl = m.top.apiBaseUrl
+                m.playlistSelector.authToken = m.top.authToken
+                m.playlistSelector.callFunc("loadPlaylists")
+            end if
+        end sub
+        
+        sub onPlaylistSelected()
+            ' User selected a playlist, switch to player
+            selectedPlaylist = m.playlistSelector.playlistSelected
+            
+            print ">>> Playlist selected: " + selectedPlaylist.name
+            
+            ' Hide selector, show player
+            m.playlistSelector.visible = false
+            m.audioPlayer.visible = true
+            
+            ' Pass config and playlist to player
+            m.audioPlayer.apiBaseUrl = m.top.apiBaseUrl
+            m.audioPlayer.authToken = m.top.authToken
+            m.audioPlayer.playlistId = selectedPlaylist.id
+            m.audioPlayer.playlistName = selectedPlaylist.name
+            
+            ' SET FOCUS to audio player for key events
+            m.audioPlayer.setFocus(true)
+            
+            m.audioPlayer.callFunc("loadAndPlay")
+        end sub
+        
+        sub onBackFromPlayer()
+            ' User pressed back in player, return to playlist selector
+            print ">>> Back from player"
+            m.audioPlayer.callFunc("stopPlayback")
+            m.audioPlayer.visible = false
+            m.playlistSelector.visible = true
+            
+            ' SET FOCUS back to playlist selector
+            m.playlistSelector.setFocus(true)
+        end sub
+    ]]>
+    </script>
+</component>

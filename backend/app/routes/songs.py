@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
+from sqlalchemy.orm import joinedload
 from app import db
 from app.models import Song, Style, Playlist, playlist_songs
 from app.services.audio_storage import get_storage_service
@@ -224,15 +225,22 @@ def get_songs():
     if playlist_id:
         query = query.join(playlist_songs).filter(playlist_songs.c.playlist_id == int(playlist_id))
 
-    # Apply search
+    # Apply search — ilike for case-insensitive matching (LIKE is case-sensitive in PostgreSQL)
     if search:
         search_pattern = f'%{search}%'
         query = query.filter(
             db.or_(
-                Song.specific_title.like(search_pattern),
-                Song.specific_lyrics.like(search_pattern)
+                Song.specific_title.ilike(search_pattern),
+                Song.specific_lyrics.ilike(search_pattern)
             )
         )
+
+    # Eager load relationships to prevent N+1 queries
+    query = query.options(
+        joinedload(Song.style).joinedload(Style.creator),  # Load style + style creator
+        joinedload(Song.creator),  # Load song creator
+
+    )
 
     # Order by creation date (newest first)
     query = query.order_by(Song.created_at.desc())
@@ -490,25 +498,39 @@ def _check_suno_status(song):
                         song.status = 'completed'
                         created_songs.append(song)
                     else:
-                        # Create a new song for additional tracks
-                        new_song = Song(
-                            user_id=song.user_id,
-                            source_type=song.source_type,
-                            status='completed',
-                            specific_title=f"{song.specific_title or 'Untitled'} (v{track_number})",
-                            version=song.version,
-                            specific_lyrics=song.specific_lyrics,
-                            prompt_to_generate=song.prompt_to_generate,
-                            style_id=song.style_id,
-                            vocal_gender=song.vocal_gender,
-                            voice_name=song.voice_name,
-                            download_url=audio_url,
+                        # Upsert: check if sibling already exists for this track (Suno fires callback multiple times)
+                        existing_sibling = Song.query.filter_by(
                             sibling_group_id=task_id,
-                            track_number=track_number,
-                            suno_task_id=task_id
-                        )
-                        db.session.add(new_song)
-                        created_songs.append(new_song)
+                            track_number=track_number
+                        ).first()
+
+                        if existing_sibling:
+                            existing_sibling.download_url = audio_url
+                            existing_sibling.status = 'completed'
+                            created_songs.append(existing_sibling)
+                        else:
+                            # Create a new song for additional tracks
+                            new_song = Song(
+                                user_id=song.user_id,
+                                source_type=song.source_type,
+                                status='completed',
+                                specific_title=song.specific_title or 'Untitled',
+                                version=song.version,
+                                specific_lyrics=song.specific_lyrics,
+                                prompt_to_generate=song.prompt_to_generate,
+                                style_id=song.style_id,
+                                vocal_gender=song.vocal_gender,
+                                voice_name=song.voice_name,
+                                download_url=audio_url,
+                                sibling_group_id=task_id,
+                                track_number=track_number,
+                                suno_task_id=task_id
+                            )
+                            db.session.add(new_song)
+                            # Auto-add sibling to the same playlists as the original song
+                            for playlist in song.playlists.all():
+                                new_song.playlists.append(playlist)
+                            created_songs.append(new_song)
 
                 db.session.commit()
                 current_app.logger.info(f"Created/updated {len(created_songs)} songs for task {task_id}")

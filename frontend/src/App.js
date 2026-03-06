@@ -16,10 +16,16 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [mobileRedirect, setMobileRedirect] = useState(false);
 
   useEffect(() => {
-    // Detect mobile device
-    setIsMobile(isMobileDevice());
+    // Detect mobile device — only redirect on fresh app open (no referrer = new session)
+    const mobile = isMobileDevice();
+    setIsMobile(mobile);
+    if (mobile && !sessionStorage.getItem('mobileRedirected')) {
+      sessionStorage.setItem('mobileRedirected', '1');
+      setMobileRedirect(true);
+    }
 
     // Check for OAuth callback params first
     const urlParams = new URLSearchParams(window.location.search);
@@ -76,7 +82,7 @@ function App() {
           path="/"
           element={
             isAuthenticated ? (
-              <HomePremium onLogout={handleLogout} />
+              mobileRedirect ? <Navigate to="/player" replace /> : <HomePremium onLogout={handleLogout} />
             ) : (
               <Navigate to="/login" />
             )

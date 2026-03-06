@@ -44,23 +44,54 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
   const effectiveArchivedUrl = song.archived_url || song.archived_url_1;
   const isGenerating = song.status === 'submitted' || (song.status === 'completed' && !effectiveDownloadUrl && !effectiveArchivedUrl);
 
-  // Update progress every second for generating songs
+  // Track elapsed seconds for timer display
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  // Update progress + elapsed timer every second for generating songs
   useEffect(() => {
-    if (!isGenerating) return;
+    if (!isGenerating) {
+      setElapsedSeconds(0);
+      return;
+    }
 
     // Use submitted_at from song, or fall back to created_at, or current time
     const startTime = song.submitted_at || song.created_at || new Date().toISOString();
+    const startMs = new Date(startTime).getTime();
 
-    // Initial calculation
-    setGenerationProgress(getGenerationProgress(startTime));
-
-    // Update every second
-    const interval = setInterval(() => {
+    const tick = () => {
+      const elapsed = Math.max(0, (Date.now() - startMs) / 1000);
+      setElapsedSeconds(Math.floor(elapsed));
       setGenerationProgress(getGenerationProgress(startTime));
-    }, 1000);
+    };
 
+    tick(); // Initial calculation
+    const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
   }, [isGenerating, song.submitted_at, song.created_at]);
+
+  // Cancel generation — PATCH status back to 'create'
+  const handleCancelGeneration = async (e) => {
+    e.stopPropagation();
+    try {
+      await updateSong(song.id, { status: 'create' });
+      // Optimistically update the local song object so the card re-renders
+      // The parent will eventually re-sync from the server
+      song.status = 'create';
+      // Force a re-render by triggering a state change
+      setElapsedSeconds(prev => prev); // no-op but triggers check
+    } catch (err) {
+      console.error('Failed to cancel generation:', err);
+    }
+  };
+
+  // Format elapsed as M:SS
+  const formatElapsed = (secs) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  };
+
+  const isTakingLong = elapsedSeconds >= 480; // 8+ minutes
 
   // Update "last checked" display
   useEffect(() => {
@@ -174,6 +205,8 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
 
     if (otherAudioRef.current) {
       otherAudioRef.current.pause();
+      otherAudioRef.current.removeAttribute('src');
+      otherAudioRef.current.load();
     }
 
     if (audioRef.current) {
@@ -181,6 +214,13 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
         audioRef.current.pause();
         setPlayingTrack(null);
       } else {
+        // Set src on demand — avoid preloading all songs on page
+        const url = trackNum === 1
+          ? (effectiveArchivedUrl || effectiveDownloadUrl)
+          : (song.archived_url_2 || song.download_url_2);
+        if (url && audioRef.current.src !== new URL(url, window.location.origin).href) {
+          audioRef.current.src = url;
+        }
         audioRef.current.play().catch(console.error);
         setPlayingTrack(trackNum);
       }
@@ -325,10 +365,12 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
 
       {/* Generation Progress Bar */}
       {isGenerating && (
-        <div className="generation-progress">
+        <div className={`generation-progress ${isTakingLong ? 'generation-progress--slow' : ''}`}>
           <div className="generation-progress__header">
-            <span className="generation-progress__stage">{generationProgress.stage}</span>
-            <span className="generation-progress__percent">{Math.round(generationProgress.progress)}%</span>
+            <span className="generation-progress__stage">
+              {isTakingLong ? 'Taking longer than expected...' : generationProgress.stage}
+            </span>
+            <span className="generation-progress__elapsed">{formatElapsed(elapsedSeconds)}</span>
           </div>
           <div className="generation-progress__bar">
             <div
@@ -336,12 +378,31 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
               style={{ width: `${generationProgress.progress}%` }}
             />
           </div>
-          {lastCheckedAgo && (
-            <div className="generation-progress__footer">
-              <span className="generation-progress__spinner"></span>
-              <span>Checked {lastCheckedAgo}</span>
+          <div className="generation-progress__footer">
+            {!isTakingLong && (
+              <span className="generation-progress__hint">Suno usually takes 2–5 minutes&hellip;</span>
+            )}
+            {isTakingLong && (
+              <span className="generation-progress__hint generation-progress__hint--slow">
+                Still working — Suno is taking longer than usual. You can wait or cancel and retry.
+              </span>
+            )}
+            <div className="generation-progress__footer-right">
+              {lastCheckedAgo && (
+                <span className="generation-progress__checked">
+                  <span className="generation-progress__spinner"></span>
+                  Checked {lastCheckedAgo}
+                </span>
+              )}
+              <button
+                className="generation-progress__cancel"
+                onClick={handleCancelGeneration}
+                title="Cancel generation and move back to draft"
+              >
+                Cancel
+              </button>
             </div>
-          )}
+          </div>
         </div>
       )}
 
@@ -383,9 +444,9 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
           )}
 
           {/* Hidden audio elements */}
-          <audio ref={audioRef1} src={effectiveArchivedUrl || effectiveDownloadUrl} preload="metadata" onEnded={() => handleAudioEnded(1)} style={{ display: 'none' }} />
+          <audio ref={audioRef1} preload="none" onEnded={() => handleAudioEnded(1)} style={{ display: 'none' }} />
           {!song.download_url && (song.download_url_2 || song.archived_url_2) && (
-            <audio ref={audioRef2} src={song.archived_url_2 || song.download_url_2} preload="metadata" onEnded={() => handleAudioEnded(2)} style={{ display: 'none' }} />
+            <audio ref={audioRef2} preload="none" onEnded={() => handleAudioEnded(2)} style={{ display: 'none' }} />
           )}
         </div>
       )}

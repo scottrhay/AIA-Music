@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="PlaylistListItem" extends="Group">
+    <interface>
+        <field id="itemContent" type="node" onChange="onContentChanged" />
+    </interface>
+
+    <children>
+        <!-- Background rectangle -->
+        <Rectangle
+            id="background"
+            width="1080"
+            height="80"
+            color="0x202020FF"
+        />
+        
+        <!-- Title text -->
+        <Label
+            id="title"
+            translation="[20, 20]"
+            font="font:MediumBoldSystemFont"
+            color="0xFFFFFFFF"
+        />
+        
+        <!-- Description text -->
+        <Label
+            id="description"
+            translation="[20, 50]"
+            font="font:SmallSystemFont"
+            color="0xCCCCCCFF"
+        />
+    </children>
+
+    <script type="text/brightscript">
+    <![CDATA[
+        sub init()
+            m.background = m.top.findNode("background")
+            m.title = m.top.findNode("title")
+            m.description = m.top.findNode("description")
+        end sub
+        
+        sub onContentChanged()
+            content = m.top.itemContent
+            
+            if content <> invalid
+                m.title.text = content.title
+                m.description.text = content.description
+            end if
+        end sub
+        
+        sub onFocusChanged()
+            if m.top.focusedChild <> invalid
+                ' Focused
+                m.background.color = "0x0080FFFF"
+            else
+                ' Unfocused
+                m.background.color = "0x202020FF"
+            end if
+        end sub
+    ]]>
+    </script>
+</component>

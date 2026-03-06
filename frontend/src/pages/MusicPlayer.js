@@ -12,6 +12,11 @@ function MusicPlayer({ onLogout, autoResume = false }) {
   const hasRestoredState = useRef(false);
   const saveTimeoutRef = useRef(null);
 
+  // ── Debug tracing ──
+  const trace = useCallback((msg) => {
+    console.log('[MusicPlayer]', msg);
+  }, []);
+
   const [playlists, setPlaylists] = useState([]);
   const [selectedPlaylistId, setSelectedPlaylistId] = useState('');
   const [currentPlaylist, setCurrentPlaylist] = useState(null);
@@ -92,7 +97,13 @@ function MusicPlayer({ onLogout, autoResume = false }) {
   useEffect(() => {
     if (!loading && playlists.length > 0 && !hasRestoredState.current) {
       hasRestoredState.current = true;
-      restorePlaybackState();
+      const savedState = getPlaybackState();
+      if (savedState) {
+        restorePlaybackState();
+      } else {
+        // Default to first playlist
+        setSelectedPlaylistId(String(playlists[0].id));
+      }
     }
   }, [loading, playlists]);
 
@@ -131,10 +142,12 @@ function MusicPlayer({ onLogout, autoResume = false }) {
     }
   };
 
+  const manualPlaylistLoad = useRef(false);
   useEffect(() => {
-    if (selectedPlaylistId) {
+    if (selectedPlaylistId && !manualPlaylistLoad.current) {
       loadPlaylistDetail(selectedPlaylistId);
     }
+    manualPlaylistLoad.current = false;
   }, [selectedPlaylistId]);
 
   // Apply pending state after playlist loads
@@ -175,18 +188,41 @@ function MusicPlayer({ onLogout, autoResume = false }) {
         const url = currentTrack === 1
           ? (song.archived_url_1 || song.download_url_1)
           : (song.archived_url_2 || song.download_url_2);
+        trace(`SRC effect: idx=${currentSongIndex} track=${currentTrack} url=${url?.substring(0,60)} isPlaying=${isPlaying} isRestoring=${isRestoring}`);
         if (audioRef.current && url) {
-          // Only update src if URL changed to avoid unnecessary metadata reload
-          if (audioRef.current.src !== url) {
-            audioRef.current.src = url;
+          const resolvedUrl = new URL(url, window.location.origin).href;
+          const currentSrc = audioRef.current.src;
+          if (currentSrc !== resolvedUrl) {
+            trace(`Setting src → ${resolvedUrl.substring(0,80)}...`);
+            audioRef.current.src = resolvedUrl;
+            audioRef.current.load();
+            trace(`load() called. readyState=${audioRef.current.readyState} networkState=${audioRef.current.networkState}`);
+          } else {
+            trace(`Src unchanged, skipping reload`);
           }
           if (isPlaying && !isRestoring) {
-            audioRef.current.play().catch(console.error);
+            const playWhenReady = () => {
+              trace(`canplay fired! readyState=${audioRef.current.readyState} — calling play()`);
+              audioRef.current.play().then(() => {
+                trace(`play() resolved OK`);
+              }).catch(e => {
+                trace(`play() REJECTED: ${e.name}: ${e.message}`);
+              });
+            };
+            if (audioRef.current.readyState >= 3) {
+              trace(`readyState already ${audioRef.current.readyState} — playing immediately`);
+              audioRef.current.play().then(() => trace('play() OK')).catch(e => trace(`play() ERR: ${e.name}: ${e.message}`));
+            } else {
+              trace(`readyState=${audioRef.current.readyState} — waiting for canplay`);
+              audioRef.current.addEventListener('canplay', playWhenReady, { once: true });
+            }
           }
+        } else {
+          trace(`No audio ref or no URL`);
         }
       }
     }
-  }, [currentSongIndex, currentTrack, currentPlaylist, isRestoring]);
+  }, [currentSongIndex, currentTrack, currentPlaylist, isRestoring, trace]);
 
   const loadPlaylists = async () => {
     try {
@@ -200,7 +236,7 @@ function MusicPlayer({ onLogout, autoResume = false }) {
     }
   };
 
-  const loadPlaylistDetail = async (playlistId) => {
+  const loadPlaylistDetail = async (playlistId, autoPlay = false) => {
     try {
       const playlist = await getPlaylist(playlistId);
       setCurrentPlaylist(playlist);
@@ -208,7 +244,7 @@ function MusicPlayer({ onLogout, autoResume = false }) {
       if (!pendingSeekTime) {
         setCurrentSongIndex(0);
         setCurrentTrack(1);
-        setIsPlaying(false);
+        setIsPlaying(autoPlay);
       }
     } catch (err) {
       console.error('Failed to load playlist:', err);
@@ -219,13 +255,48 @@ function MusicPlayer({ onLogout, autoResume = false }) {
   const hasTrack1 = currentSong?.archived_url_1 || currentSong?.download_url_1;
   const hasTrack2 = currentSong?.archived_url_2 || currentSong?.download_url_2;
 
+  // Media Session API — enables lock screen controls and background playback on iOS/Android
+  useEffect(() => {
+    if (!('mediaSession' in navigator) || !currentSong) return;
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: currentSong.specific_title || currentSong.title || 'Unknown',
+      artist: currentSong.artist || 'AIA Music',
+      album: currentPlaylist?.name || 'Playlist',
+      artwork: currentSong.image_url ? [{ src: currentSong.image_url, sizes: '512x512', type: 'image/png' }] : [],
+    });
+
+    navigator.mediaSession.setActionHandler('play', () => {
+      audioRef.current?.play();
+      setIsPlaying(true);
+    });
+    navigator.mediaSession.setActionHandler('pause', () => {
+      audioRef.current?.pause();
+      setIsPlaying(false);
+    });
+    navigator.mediaSession.setActionHandler('previoustrack', () => {
+      if (currentSongIndex > 0) {
+        setCurrentSongIndex(currentSongIndex - 1);
+        setCurrentTrack(1);
+        setIsPlaying(true);
+      }
+    });
+    navigator.mediaSession.setActionHandler('nexttrack', () => {
+      const nextIndex = currentSongIndex < currentPlaylist.songs.length - 1 ? currentSongIndex + 1 : 0;
+      setCurrentSongIndex(nextIndex);
+      setCurrentTrack(1);
+      setIsPlaying(true);
+    });
+  }, [currentSong, currentSongIndex, currentPlaylist]);
+
   const handlePlayPause = () => {
     if (!audioRef.current) return;
+    trace(`PlayPause clicked. isPlaying=${isPlaying} src=${audioRef.current.src?.substring(0,60)} readyState=${audioRef.current.readyState} networkState=${audioRef.current.networkState}`);
 
     if (isPlaying) {
       audioRef.current.pause();
     } else {
-      audioRef.current.play().catch(console.error);
+      audioRef.current.play().then(() => trace('play() from button OK')).catch(e => trace(`play() from button ERR: ${e.name}: ${e.message}`));
     }
     setIsPlaying(!isPlaying);
   };
@@ -284,16 +355,61 @@ function MusicPlayer({ onLogout, autoResume = false }) {
     }
   };
 
-  const handleEnded = () => {
-    // Auto-advance to next song
-    if (currentPlaylist && currentSongIndex < currentPlaylist.songs.length - 1) {
-      setCurrentSongIndex(currentSongIndex + 1);
-      setCurrentTrack(1);
-      // isPlaying is already true, useEffect will handle play() when src updates
-    } else {
-      setIsPlaying(false);
+  // Keep a ref to playlist/index so handleEnded can read current values
+  // even when called from a native DOM event listener (iOS background)
+  const playlistRef = useRef(null);
+  const songIndexRef = useRef(0);
+  useEffect(() => { playlistRef.current = currentPlaylist; }, [currentPlaylist]);
+  useEffect(() => { songIndexRef.current = currentSongIndex; }, [currentSongIndex]);
+
+  const handleEnded = useCallback(() => {
+    const playlist = playlistRef.current;
+    const idx = songIndexRef.current;
+    if (!playlist || !playlist.songs?.length) return;
+
+    const songs = playlist.songs;
+    const totalSongs = songs.length;
+
+    // Find next playable song (loop back to 0 at end)
+    const findNextPlayable = (startIdx) => {
+      for (let i = 0; i < totalSongs; i++) {
+        const candidate = (startIdx + i) % totalSongs;
+        const s = songs[candidate];
+        if (s?.archived_url_1 || s?.download_url_1) return candidate;
+      }
+      return null;
+    };
+
+    const rawNext = (idx + 1) % totalSongs;
+    const nextIndex = findNextPlayable(rawNext);
+    if (nextIndex === null) { setIsPlaying(false); return; }
+
+    const nextSong = songs[nextIndex];
+    const nextUrl = nextSong.archived_url_1 || nextSong.download_url_1;
+    const resolvedUrl = new URL(nextUrl, window.location.origin).href;
+
+    // ── Critical: advance audio directly on DOM element ──────────────────
+    // iOS throttles React state updates when screen is locked, so we set
+    // src/load/play immediately here without waiting for the useEffect cycle.
+    if (audioRef.current) {
+      audioRef.current.src = resolvedUrl;
+      audioRef.current.load();
+      audioRef.current.play().catch(() => {});
     }
-  };
+
+    // Sync React state for UI (useEffect will see src already matches → no double-play)
+    setCurrentSongIndex(nextIndex);
+    setCurrentTrack(1);
+    setIsPlaying(true);
+  }, []); // stable — reads via refs
+
+  // Attach ended listener directly to DOM element (more reliable than React's onEnded on iOS)
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.addEventListener('ended', handleEnded);
+    return () => audio.removeEventListener('ended', handleEnded);
+  }, [handleEnded]);
 
   const formatTime = (seconds) => {
     if (!seconds || isNaN(seconds)) return '0:00';
@@ -320,7 +436,12 @@ function MusicPlayer({ onLogout, autoResume = false }) {
           <select
             className="playlist-selector"
             value={selectedPlaylistId}
-            onChange={(e) => setSelectedPlaylistId(e.target.value)}
+            onChange={(e) => {
+              const id = e.target.value;
+              manualPlaylistLoad.current = true;
+              setSelectedPlaylistId(id);
+              if (id) loadPlaylistDetail(id, true);
+            }}
           >
             <option value="">Select a playlist...</option>
             {playlists.map((playlist) => (
@@ -372,23 +493,7 @@ function MusicPlayer({ onLogout, autoResume = false }) {
                   </p>
                 </div>
 
-                {/* Track Toggle */}
-                <div className="track-toggle">
-                  <button
-                    className={`track-btn ${currentTrack === 1 ? 'active' : ''} ${!hasTrack1 ? 'disabled' : ''}`}
-                    onClick={() => handleTrackToggle(1)}
-                    disabled={!hasTrack1}
-                  >
-                    Track 1
-                  </button>
-                  <button
-                    className={`track-btn ${currentTrack === 2 ? 'active' : ''} ${!hasTrack2 ? 'disabled' : ''}`}
-                    onClick={() => handleTrackToggle(2)}
-                    disabled={!hasTrack2}
-                  >
-                    Track 2
-                  </button>
-                </div>
+
 
                 {/* Progress Bar */}
                 <div className="progress-section">
@@ -503,13 +608,27 @@ function MusicPlayer({ onLogout, autoResume = false }) {
       {/* Hidden audio element */}
       <audio
         ref={audioRef}
-        preload="metadata"
+        preload="auto"
         onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onEnded={handleEnded}
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
+        onLoadedMetadata={(e) => {
+          handleLoadedMetadata();
+          trace(`loadedmetadata: duration=${e.target.duration?.toFixed(1)}s`);
+        }}
+        onCanPlay={() => trace(`canplay event: readyState=${audioRef.current?.readyState}`)}
+        onPlaying={() => trace(`playing event (audio actually started)`)}
+        onWaiting={() => trace(`waiting event (buffering stall)`)}
+        onStalled={() => trace(`stalled event (download stalled)`)}
+        onSuspend={() => trace(`suspend event (download suspended)`)}
+        onPlay={() => { trace('play event'); setIsPlaying(true); }}
+        onPause={() => { trace('pause event'); setIsPlaying(false); }}
+        onError={(e) => {
+          const err = e.target.error;
+          trace(`ERROR: code=${err?.code} msg=${err?.message}`);
+          // Skip broken track — use same direct DOM advance as handleEnded
+          handleEnded();
+        }}
       />
+
     </div>
   );
 }

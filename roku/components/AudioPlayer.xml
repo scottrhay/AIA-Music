@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="AudioPlayer" extends="Group">
+    <interface>
+        <field id="apiBaseUrl" type="string" />
+        <field id="authToken" type="string" />
+        <field id="playlistId" type="integer" />
+        <field id="playlistName" type="string" />
+        <field id="backPressed" type="boolean" alwaysNotify="true" />
+        <function name="loadAndPlay" />
+        <function name="stopPlayback" />
+    </interface>
+
+    <children>
+        <Poster id="background" uri="pkg:/images/bg_player.png" width="1280" height="720" />
+        <Label id="playlistTitle" translation="[100, 80]" font="font:LargeBoldSystemFont" color="0xFFFFFFFF" />
+        <Label text="Now Playing:" translation="[100, 200]" font="font:MediumSystemFont" color="0xCCCCCCFF" />
+        <Label id="songTitle" translation="[100, 250]" font="font:LargeBoldSystemFont" color="0xFFFFFFFF" />
+        <Label id="songNumber" translation="[100, 320]" font="font:MediumSystemFont" color="0xCCCCCCFF" />
+        <Label id="statusLabel" translation="[100, 400]" font="font:MediumSystemFont" color="0x00FF00FF" />
+        <Label text="OK=Play/Pause | Left/Right=Skip | Back=Playlists" translation="[100, 600]" font="font:SmallSystemFont" color="0x666666FF" />
+        <Audio id="audioPlayer" />
+    </children>
+
+    <script type="text/brightscript">
+<![CDATA[
+sub init()
+    m.audioPlayer = m.top.findNode("audioPlayer")
+    m.playlistTitle = m.top.findNode("playlistTitle")
+    m.songTitle = m.top.findNode("songTitle")
+    m.songNumber = m.top.findNode("songNumber")
+    m.statusLabel = m.top.findNode("statusLabel")
+    m.audioPlayer.observeField("state", "onAudioStateChange")
+    m.top.observeField("focusedChild", "onFocusChanged")
+    m.songs = []
+    m.currentIndex = 0
+    m.isPlaying = false
+end sub
+
+sub onFocusChanged()
+    if m.top.hasFocus()
+        print ">>> AudioPlayer got focus"
+    end if
+end sub
+
+sub loadAndPlay()
+    m.playlistTitle.text = "Playlist: " + m.top.playlistName
+    m.statusLabel.text = "Loading songs..."
+    
+    m.task = CreateObject("roSGNode", "NetworkTask")
+    m.task.apiBaseUrl = m.top.apiBaseUrl
+    m.task.authToken = m.top.authToken
+    m.task.requestType = "songs"
+    m.task.playlistId = m.top.playlistId
+    m.task.observeField("response", "onSongsLoaded")
+    m.task.control = "run"
+end sub
+
+sub onSongsLoaded()
+    result = m.task.response
+    
+    if result.success and result.data <> invalid and result.data.playlist <> invalid and result.data.playlist.songs <> invalid
+        m.songs = result.data.playlist.songs
+        if m.songs.count() > 0
+            m.currentIndex = 0
+            playSong(m.currentIndex)
+        else
+            m.statusLabel.text = "No songs in playlist"
+        end if
+    else
+        m.statusLabel.text = "Error loading songs"
+    end if
+end sub
+
+sub playSong(index as integer)
+    if index < 0 or index >= m.songs.count() then return
+    
+    song = m.songs[index]
+    m.currentIndex = index
+    
+    title = "Unknown"
+    if song.specific_title <> invalid then title = song.specific_title
+    m.songTitle.text = title
+    m.songNumber.text = "Song " + (index + 1).tostr() + " of " + m.songs.count().tostr()
+    m.statusLabel.text = "Loading audio..."
+    
+    audioUrl = ""
+    baseUrl = "https://music.aiacopilot.com"
+    
+    ' PREFER archived_url (server) - CDN URLs expire/fail
+    if song.archived_url <> invalid and song.archived_url <> ""
+        if Left(song.archived_url, 1) = "/" then audioUrl = baseUrl + song.archived_url else audioUrl = song.archived_url
+    end if
+    
+    ' Fallback to download_url only if no archived
+    if audioUrl = "" and song.download_url <> invalid and song.download_url <> "" then audioUrl = song.download_url
+    
+    print ">>> Playing song: " + title
+    print ">>> Audio URL: " + audioUrl
+    
+    if audioUrl <> ""
+        content = CreateObject("roSGNode", "ContentNode")
+        content.url = audioUrl
+        content.streamFormat = "mp3"
+        m.audioPlayer.content = content
+        m.audioPlayer.control = "play"
+        m.isPlaying = true
+        m.statusLabel.text = "Playing..."
+    else
+        print ">>> NO AUDIO URL FOUND"
+        m.statusLabel.text = "No audio URL - skipping"
+        nextSong()
+    end if
+end sub
+
+sub onAudioStateChange()
+    state = m.audioPlayer.state
+    print ">>> Audio state: " + state
+    if state = "playing" then m.statusLabel.text = "Playing" : m.isPlaying = true
+    if state = "paused" then m.statusLabel.text = "Paused" : m.isPlaying = false
+    if state = "stopped" then m.statusLabel.text = "Stopped" : m.isPlaying = false
+    if state = "finished" then nextSong()
+    if state = "error" 
+        print ">>> PLAYBACK ERROR"
+        m.statusLabel.text = "Playback error - skipping"
+        nextSong()
+    end if
+end sub
+
+sub togglePlayPause()
+    if m.isPlaying then m.audioPlayer.control = "pause" else m.audioPlayer.control = "resume"
+end sub
+
+sub nextSong()
+    if m.currentIndex < m.songs.count() - 1 then playSong(m.currentIndex + 1) else m.statusLabel.text = "End of playlist"
+end sub
+
+sub previousSong()
+    if m.currentIndex > 0 then playSong(m.currentIndex - 1) else playSong(0)
+end sub
+
+sub stopPlayback()
+    m.audioPlayer.control = "stop"
+    m.isPlaying = false
+end sub
+
+function onKeyEvent(key as string, press as boolean) as boolean
+    print ">>> Key pressed: " + key + " press=" + press.tostr()
+    if not press then return false
+    if key = "OK"
+        print ">>> Toggle play/pause"
+        togglePlayPause()
+        return true
+    else if key = "right"
+        print ">>> Next song"
+        nextSong()
+        return true
+    else if key = "left"
+        print ">>> Previous song"
+        previousSong()
+        return true
+    else if key = "back"
+        print ">>> Back pressed"
+        m.top.backPressed = true
+        return true
+    end if
+    return false
+end function
+]]>
+    </script>
+</component>

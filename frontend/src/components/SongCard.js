@@ -25,6 +25,11 @@ function SongCard({ song, onView, onDelete, onDuplicate, onUpdateTitle, onRating
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
+      // Set src on demand to avoid preloading every card
+      const url = song.archived_url || song.download_url || song.download_url_1;
+      if (url && !audioRef.current.src) {
+        audioRef.current.src = url;
+      }
       audioRef.current.play();
       setIsPlaying(true);
     }
@@ -179,8 +184,7 @@ function SongCard({ song, onView, onDelete, onDuplicate, onUpdateTitle, onRating
             {/* Hidden audio element */}
             <audio
               ref={audioRef}
-              src={song.archived_url || song.download_url || song.download_url_1}
-              preload="metadata"
+              preload="none"
               onEnded={handleAudioEnded}
               style={{ display: 'none' }}
             />

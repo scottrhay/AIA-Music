@@ -127,20 +127,11 @@ function ManageStyles({ onLogout }) {
     if (!selectedStyle) return;
 
     try {
-      // First check how many songs use this style
+      // Check how many songs use this style, then always show modal
       const countData = await getStyleSongsCount(selectedStyle.id);
-
-      if (countData.count > 0) {
-        // Show reassignment modal
-        setDeleteInfo({ style: selectedStyle, songsCount: countData.count });
-        setReassignTo(0); // Default to "No style"
-        setShowDeleteModal(true);
-      } else {
-        // No songs, confirm and delete directly
-        if (window.confirm(`Delete style "${selectedStyle.name}"? This cannot be undone.`)) {
-          await performDelete(selectedStyle.id, null);
-        }
-      }
+      setDeleteInfo({ style: selectedStyle, songsCount: countData.count });
+      setReassignTo(0);
+      setShowDeleteModal(true);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to check style usage');
     }
@@ -361,26 +352,34 @@ function ManageStyles({ onLogout }) {
               <button className="modal-close" onClick={handleCancelDelete}>×</button>
             </div>
             <div className="modal-body">
-              <p>
-                The style <strong>"{deleteInfo.style?.name}"</strong> is used by{' '}
-                <strong>{deleteInfo.songsCount} song{deleteInfo.songsCount !== 1 ? 's' : ''}</strong>.
-              </p>
-              <p>Choose which style to assign these songs to:</p>
-
-              <div className="reassign-select-wrapper">
-                <select
-                  value={reassignTo}
-                  onChange={(e) => setReassignTo(parseInt(e.target.value))}
-                  className="reassign-select"
-                >
-                  <option value={0}>No style (remove style from songs)</option>
-                  {availableStyles.map(style => (
-                    <option key={style.id} value={style.id}>
-                      {style.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {deleteInfo.songsCount > 0 ? (
+                <>
+                  <p>
+                    The style <strong>"{deleteInfo.style?.name}"</strong> is used by{' '}
+                    <strong>{deleteInfo.songsCount} song{deleteInfo.songsCount !== 1 ? 's' : ''}</strong>.
+                  </p>
+                  <p>Choose which style to assign these songs to:</p>
+                  <div className="reassign-select-wrapper">
+                    <select
+                      value={reassignTo}
+                      onChange={(e) => setReassignTo(parseInt(e.target.value))}
+                      className="reassign-select"
+                    >
+                      <option value={0}>No style (remove style from songs)</option>
+                      {availableStyles.map(style => (
+                        <option key={style.id} value={style.id}>
+                          {style.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              ) : (
+                <p>
+                  Delete the style <strong>"{deleteInfo.style?.name}"</strong>? No songs use this style.
+                  This cannot be undone.
+                </p>
+              )}
             </div>
             <div className="modal-footer">
               <button

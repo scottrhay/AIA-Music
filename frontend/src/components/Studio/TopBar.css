@@ -8,6 +8,8 @@
   top: 0;
   z-index: var(--z-sticky);
   transition: all var(--transition-base);
+  /* Respect Dynamic Island / notch on iPhone */
+  padding-top: env(safe-area-inset-top);
 }
 
 /* Add subtle shadow on scroll */

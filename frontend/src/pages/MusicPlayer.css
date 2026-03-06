@@ -8,6 +8,9 @@
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  /* Respect Dynamic Island / notch on iPhone */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* Dynamic gradient background that shifts */

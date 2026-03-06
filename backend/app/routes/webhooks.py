@@ -272,26 +272,41 @@ def suno_callback():
                 created_songs.append(original_song)
                 current_app.logger.info(f"Suno callback: Updated original song {original_song.id} with track {track_number}")
             else:
-                # Create a new song for additional tracks
-                new_song = Song(
-                    user_id=original_song.user_id,
-                    source_type=original_song.source_type,
-                    status='completed',
-                    specific_title=f"{original_song.specific_title or 'Untitled'} (v{track_number})",
-                    version=original_song.version,
-                    specific_lyrics=original_song.specific_lyrics,
-                    prompt_to_generate=original_song.prompt_to_generate,
-                    style_id=original_song.style_id,
-                    vocal_gender=original_song.vocal_gender,
-                    voice_name=original_song.voice_name,
-                    download_url=audio_url,
+                # Upsert: check if sibling already exists for this track (Suno fires callback multiple times)
+                existing_sibling = Song.query.filter_by(
                     sibling_group_id=task_id,
-                    track_number=track_number,
-                    suno_task_id=task_id  # Same task ID for reference
-                )
-                db.session.add(new_song)
-                created_songs.append(new_song)
-                current_app.logger.info(f"Suno callback: Created new song for track {track_number}")
+                    track_number=track_number
+                ).first()
+
+                if existing_sibling:
+                    existing_sibling.download_url = audio_url
+                    existing_sibling.status = 'completed'
+                    created_songs.append(existing_sibling)
+                    current_app.logger.info(f"Suno callback: Updated existing sibling {existing_sibling.id} for track {track_number}")
+                else:
+                    # Create a new song for additional tracks
+                    new_song = Song(
+                        user_id=original_song.user_id,
+                        source_type=original_song.source_type,
+                        status='completed',
+                        specific_title=original_song.specific_title or 'Untitled',
+                        version=original_song.version,
+                        specific_lyrics=original_song.specific_lyrics,
+                        prompt_to_generate=original_song.prompt_to_generate,
+                        style_id=original_song.style_id,
+                        vocal_gender=original_song.vocal_gender,
+                        voice_name=original_song.voice_name,
+                        download_url=audio_url,
+                        sibling_group_id=task_id,
+                        track_number=track_number,
+                        suno_task_id=task_id
+                    )
+                    db.session.add(new_song)
+                    # Auto-add sibling to the same playlists as the original song
+                    for playlist in original_song.playlists.all():
+                        new_song.playlists.append(playlist)
+                    created_songs.append(new_song)
+                    current_app.logger.info(f"Suno callback: Created new song for track {track_number}")
 
         db.session.commit()
         

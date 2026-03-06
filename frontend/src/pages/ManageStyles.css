@@ -347,6 +347,8 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+  box-sizing: border-box;
 }
 
 .modal-content.delete-modal {
@@ -355,6 +357,10 @@
   box-shadow: var(--shadow-xl);
   max-width: 500px;
   width: 90%;
+  /* Use 100svh (small viewport height) so Safari browser chrome never clips the modal */
+  max-height: calc(100svh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 2rem);
+  display: flex;
+  flex-direction: column;
 }
 
 .delete-modal .modal-header {
@@ -363,6 +369,7 @@
   align-items: center;
   padding: var(--spacing-5);
   border-bottom: 1px solid var(--color-neutral-200);
+  flex-shrink: 0;
 }
 
 .delete-modal .modal-header h2 {
@@ -387,6 +394,8 @@
 
 .delete-modal .modal-body {
   padding: var(--spacing-5);
+  overflow-y: auto;
+  flex: 1;
 }
 
 .delete-modal .modal-body p {
@@ -422,6 +431,8 @@
   gap: var(--spacing-3);
   padding: var(--spacing-5);
   border-top: 1px solid var(--color-neutral-200);
+  flex-shrink: 0;   /* always visible — never scrolled off */
+  flex-wrap: wrap;  /* buttons stack on very narrow screens */
 }
 
 /* Style item with delete button */
@@ -505,12 +516,19 @@
 }
 
 .btn-danger {
-  background: var(--color-error-500, #ef4444);
-  color: var(--color-white, #ffffff);
+  background: #ef4444;
+  color: #ffffff;
 }
 
 .btn-danger:hover {
-  background: var(--color-error-600, #dc2626);
+  background: #dc2626;
+}
+
+/* Higher specificity override ensures ManagePlaylists.css can't clobber this */
+.delete-modal .btn-danger {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  border: none;
 }
 
 .btn:disabled {

@@ -101,18 +101,34 @@ function HomePremium({ onLogout }) {
         setLastCheckedAt(Date.now());
 
         if (result.results && result.results.length > 0) {
-          setSongs(prevSongs => {
-            let hasChanges = false;
-            const updatedSongs = prevSongs.map(song => {
-              const statusResult = result.results.find(r => r.song_id === song.id);
-              if (statusResult && statusResult.song) {
-                hasChanges = true;
-                return { ...song, ...statusResult.song };
-              }
-              return song;
+          const anyCompleted = result.results.some(r => r.status === 'completed');
+          if (anyCompleted) {
+            // A song just finished — do a full reload so siblings created by the
+            // webhook also appear (they're never in the submitted-songs list).
+            clearInterval(intervalId);
+            pollingRef.current = false;
+            loadData();
+          } else {
+            setSongs(prevSongs => {
+              let hasChanges = false;
+              const updatedSongs = prevSongs.map(song => {
+                const statusResult = result.results.find(r => r.song_id === song.id);
+                if (statusResult && statusResult.song) {
+                  hasChanges = true;
+                  return { ...song, ...statusResult.song };
+                }
+                return song;
+              });
+              if (!hasChanges) return prevSongs;
+              return updatedSongs;
             });
-            return hasChanges ? updatedSongs : prevSongs;
-          });
+          }
+        } else if (result.total_checked === 0) {
+          // No submitted songs in DB — completed via webhook while we were polling.
+          // React state is stale. Do a full reload to show completed songs.
+          clearInterval(intervalId);
+          pollingRef.current = false;
+          loadData();
         }
 
         if (pollCheckCount.current >= MAX_POLL_CHECKS) {

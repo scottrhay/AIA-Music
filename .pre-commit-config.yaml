@@ -1,0 +1,39 @@
+# Pre-commit Hooks Configuration
+# ===============================
+# Setup: pip install pre-commit && pre-commit install
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: no-commit-to-branch
+        args: ['--branch', 'main']
+      - id: check-yaml
+      - id: check-json
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: detect-private-key
+
+  - repo: local
+    hooks:
+      - id: no-local-configs
+        name: "Block .local.conf files"
+        entry: bash -c 'if find . -name "*.local.conf" -o -name "*.local.yml" | grep -q .; then exit 1; fi'
+        language: system
+        pass_filenames: false
+      
+      - id: no-env-files
+        name: "Block .env files"
+        entry: bash -c 'git diff --cached --name-only | grep -E "^\.env$|^\.env\.local$" && exit 1 || exit 0'
+        language: system
+        pass_filenames: false
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.9
+    hooks:
+      - id: ruff
+        args: ['--fix', '--exit-non-zero-on-fix']
+        types_or: [python]
