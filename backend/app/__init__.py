@@ -32,7 +32,7 @@ def create_app(config_name='default'):
     CORS(app, origins=app.config['CORS_ORIGINS'])
 
     # Register blueprints
-    from app.routes import auth, songs, styles, webhooks, playlists
+    from app.routes import auth, songs, styles, webhooks, playlists, roku
 
     api_prefix = app.config['API_PREFIX']
     app.register_blueprint(auth.bp, url_prefix=f'{api_prefix}/auth')
@@ -40,6 +40,7 @@ def create_app(config_name='default'):
     app.register_blueprint(styles.bp, url_prefix=f'{api_prefix}/styles')
     app.register_blueprint(webhooks.bp, url_prefix=f'{api_prefix}/webhooks')
     app.register_blueprint(playlists.bp, url_prefix=f'{api_prefix}/playlists')
+    app.register_blueprint(roku.bp, url_prefix=f'{api_prefix}/roku')
 
     # Health check endpoint
     @app.route('/health')
