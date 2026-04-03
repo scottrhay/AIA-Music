@@ -42,20 +42,25 @@ function HomePremium({ onLogout }) {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [songsData, stylesData, playlistsData, statsData] = await Promise.all([
-        getSongs(filters),
+      // Songs gate the skeleton — load first so UI unblocks ASAP
+      const songsData = await getSongs(filters);
+      setSongs(songsData.songs);
+      setLoading(false);
+
+      // Load supporting data in background (non-blocking)
+      Promise.all([
         getStyles(),
         getPlaylists(),
         getSongStats(filters.all_users),
-      ]);
-
-      setSongs(songsData.songs);
-      setStyles(stylesData.styles);
-      setPlaylists(playlistsData.playlists || []);
-      setStats(statsData);
+      ]).then(([stylesData, playlistsData, statsData]) => {
+        setStyles(stylesData.styles);
+        setPlaylists(playlistsData.playlists || []);
+        setStats(statsData);
+      }).catch(err => {
+        console.error('Error loading supporting data:', err);
+      });
     } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
+      console.error('Error loading songs:', error);
       setLoading(false);
     }
   };

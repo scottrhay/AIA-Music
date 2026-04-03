@@ -6,6 +6,7 @@ function SongCard({ song, onView, onDelete, onDuplicate, onUpdateTitle, onRating
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(song.specific_title || '');
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
   const audioRef = useRef(null);
 
   // Stop audio when component unmounts
@@ -30,13 +31,19 @@ function SongCard({ song, onView, onDelete, onDuplicate, onUpdateTitle, onRating
       if (url && !audioRef.current.src) {
         audioRef.current.src = url;
       }
-      audioRef.current.play();
+      setIsBuffering(true);
+      audioRef.current.play().catch(() => setIsBuffering(false));
       setIsPlaying(true);
     }
   };
 
   const handleAudioEnded = () => {
     setIsPlaying(false);
+    setIsBuffering(false);
+  };
+
+  const handleCanPlay = () => {
+    setIsBuffering(false);
   };
   const getStatusClass = (status) => {
     switch (status) {
@@ -146,8 +153,13 @@ function SongCard({ song, onView, onDelete, onDuplicate, onUpdateTitle, onRating
         {/* Show large play button for completed songs */}
         {song.status === 'completed' && (song.download_url || song.download_url_1 || song.archived_url) && (
           <div className="song-audio-section" onClick={(e) => e.stopPropagation()}>
-            <button className={`song-play-button ${isPlaying ? 'playing' : ''}`} onClick={handlePlayPause}>
-              {isPlaying ? (
+            <button className={`song-play-button ${isPlaying ? 'playing' : ''} ${isBuffering ? 'buffering' : ''}`} onClick={handlePlayPause} disabled={isBuffering}>
+              {isBuffering ? (
+                <>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" style={{animation:'spin 1s linear infinite'}}><path d="M12 2a10 10 0 0 1 10 10h-2a8 8 0 0 0-8-8V2z"/></svg>
+                  <span className="play-text">Loading…</span>
+                </>
+              ) : isPlaying ? (
                 <>
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
                     <rect x="6" y="4" width="4" height="16"/>
@@ -186,6 +198,8 @@ function SongCard({ song, onView, onDelete, onDuplicate, onUpdateTitle, onRating
               ref={audioRef}
               preload="none"
               onEnded={handleAudioEnded}
+              onCanPlay={handleCanPlay}
+              onWaiting={() => setIsBuffering(true)}
               style={{ display: 'none' }}
             />
           </div>
