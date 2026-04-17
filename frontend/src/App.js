@@ -44,6 +44,13 @@ function App() {
     setIsLoading(false);
   }, []);
 
+  // Consume the one-shot mobile redirect so later navigations to "/" load the studio
+  useEffect(() => {
+    if (mobileRedirect) {
+      setMobileRedirect(false);
+    }
+  }, [mobileRedirect]);
+
   const handleLogout = () => {
     removeToken();
     setIsAuthenticated(false);
