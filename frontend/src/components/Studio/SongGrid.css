@@ -1,0 +1,21 @@
+@import '../../theme/theme.css';
+
+.song-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--spacing-6);
+  animation: fadeIn var(--transition-base) ease-in;
+}
+
+@media (max-width: 768px) {
+  .song-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-4);
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .song-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}

@@ -1,0 +1,87 @@
+@import '../../theme/theme.css';
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-16) var(--spacing-6);
+  text-align: center;
+  animation: fadeIn var(--transition-base) ease-in;
+}
+
+.empty-state__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  margin-bottom: var(--spacing-6);
+  background: linear-gradient(135deg, var(--color-primary-50) 0%, var(--color-primary-100) 100%);
+  border-radius: var(--radius-full);
+  color: var(--color-primary-500);
+}
+
+.empty-state__icon--search {
+  background: linear-gradient(135deg, var(--color-neutral-100) 0%, var(--color-neutral-200) 100%);
+  color: var(--color-neutral-500);
+}
+
+.empty-state__title {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-neutral-800);
+  margin: 0 0 var(--spacing-3) 0;
+}
+
+.empty-state__description {
+  max-width: 480px;
+  font-size: var(--font-size-base);
+  color: var(--color-neutral-600);
+  line-height: var(--line-height-relaxed);
+  margin: 0 0 var(--spacing-8) 0;
+}
+
+.empty-state__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-4) var(--spacing-6);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-white);
+  background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-700) 100%);
+  border: none;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.empty-state__cta:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.empty-state__cta:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .empty-state {
+    padding: var(--spacing-12) var(--spacing-4);
+  }
+
+  .empty-state__icon {
+    width: 100px;
+    height: 100px;
+  }
+
+  .empty-state__title {
+    font-size: var(--font-size-xl);
+  }
+
+  .empty-state__description {
+    font-size: var(--font-size-sm);
+  }
+}

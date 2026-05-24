@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# Environment
+.env
+.env.local
+
+# Build artifacts
+frontend/build/
+*.tar.gz
+*.zip
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.claude/
+.vscode/
+.vs/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Database
+*.db
+*.sqlite
+
+# Deployment archives (these should not be in version control)
+aiamusic-latest.tar.gz
+backend-*.tar.gz
+backend-autodownload.tar.gz
+backend-models-fix.tar.gz
+backend-stats-fix.tar.gz
+backend-styles-duplicate-fix.tar.gz
+backend-styles-fix.tar.gz
+backend-vocal-gender-fix.tar.gz
+frontend/build.tar.gz
+
+# Temporary files
+nul
+data/
+deploy/nginx/ssl/
+logs/
+report.md
+SunoLogs.txt
+deploy/archive/

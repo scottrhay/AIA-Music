@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="NetworkTask" extends="Task">
+    <interface>
+        <field id="apiBaseUrl" type="string" />
+        <field id="authToken" type="string" />
+        <field id="requestType" type="string" />
+        <field id="playlistId" type="integer" />
+        <field id="response" type="assocarray" />
+    </interface>
+
+    <script type="text/brightscript">
+<![CDATA[
+sub init()
+    m.top.functionName = "doRequest"
+end sub
+
+sub doRequest()
+    url = ""
+    if m.top.requestType = "playlists"
+        url = m.top.apiBaseUrl + "/playlists"
+    else if m.top.requestType = "songs"
+        url = m.top.apiBaseUrl + "/playlists/" + m.top.playlistId.tostr() + "/songs"
+    end if
+    
+    if url = "" then return
+    
+    request = CreateObject("roUrlTransfer")
+    request.SetUrl(url)
+    request.AddHeader("Authorization", "Bearer " + m.top.authToken)
+    request.AddHeader("Content-Type", "application/json")
+    request.SetCertificatesFile("common:/certs/ca-bundle.crt")
+    request.InitClientCertificates()
+    
+    responseStr = request.GetToString()
+    
+    result = {success: false, data: invalid, error: ""}
+    
+    if responseStr <> "" and responseStr <> invalid
+        json = ParseJson(responseStr)
+        if json <> invalid
+            result.success = true
+            result.data = json
+        else
+            result.error = "Invalid JSON"
+        end if
+    else
+        result.error = "Network error"
+    end if
+    
+    m.top.response = result
+end sub
+]]>
+    </script>
+</component>

@@ -1,0 +1,25 @@
+[Unit]
+Description=AIA Music Flask API
+After=network.target mysql.service
+
+[Service]
+Type=notify
+User=root
+Group=www-data
+WorkingDirectory=/srv/apps/aiamusic/backend
+Environment="PATH=/srv/apps/aiamusic/venv/bin"
+ExecStart=/srv/apps/aiamusic/venv/bin/gunicorn \
+    --config /srv/apps/aiamusic/deploy/gunicorn_config.py \
+    --workers 4 \
+    --bind 127.0.0.1:5000 \
+    run:app
+
+Restart=always
+RestartSec=10
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

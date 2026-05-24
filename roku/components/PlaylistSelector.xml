@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="PlaylistSelector" extends="Group">
+    <interface>
+        <field id="apiBaseUrl" type="string" />
+        <field id="authToken" type="string" />
+        <field id="playlistSelected" type="assocarray" alwaysNotify="true" />
+        <function name="loadPlaylists" />
+    </interface>
+
+    <children>
+        <Poster id="background" uri="pkg:/images/bg_playlist.png" width="1280" height="720" />
+        <Label id="title" text="AIA Music - Select Playlist" translation="[100, 50]" font="font:LargeBoldSystemFont" color="0xFFFFFFFF" />
+        <Label id="status" text="Loading..." translation="[100, 120]" font="font:SmallSystemFont" color="0x888888FF" />
+        <LabelList id="playlistList" translation="[100, 180]" itemSize="[800, 60]" />
+        <Label translation="[100, 650]" font="font:SmallSystemFont" color="0x666666FF" text="Up/Down = Navigate | OK = Select | Back = Exit" />
+    </children>
+
+    <script type="text/brightscript">
+<![CDATA[
+sub init()
+    m.playlistList = m.top.findNode("playlistList")
+    m.status = m.top.findNode("status")
+    m.playlistList.setFocus(true)
+    m.playlistList.observeField("itemSelected", "onItemSelected")
+    m.top.observeField("focusedChild", "onFocusChanged")
+    m.playlists = []
+end sub
+
+sub onFocusChanged()
+    if m.top.hasFocus()
+        print ">>> PlaylistSelector got focus, passing to list"
+        m.playlistList.setFocus(true)
+    end if
+end sub
+
+sub loadPlaylists()
+    m.status.text = "Loading playlists..."
+    
+    m.task = CreateObject("roSGNode", "NetworkTask")
+    m.task.apiBaseUrl = m.top.apiBaseUrl
+    m.task.authToken = m.top.authToken
+    m.task.requestType = "playlists"
+    m.task.observeField("response", "onPlaylistsLoaded")
+    m.task.control = "run"
+end sub
+
+sub onPlaylistsLoaded()
+    result = m.task.response
+    
+    if result.success and result.data <> invalid and result.data.playlists <> invalid
+        m.playlists = result.data.playlists
+        content = CreateObject("roSGNode", "ContentNode")
+        for each playlist in m.playlists
+            item = content.CreateChild("ContentNode")
+            songCount = 0
+            if playlist.song_count <> invalid then songCount = playlist.song_count
+            item.title = playlist.name + " (" + songCount.tostr() + " songs)"
+        end for
+        m.playlistList.content = content
+        m.status.text = m.playlists.count().tostr() + " playlists"
+    else
+        m.status.text = "Error: " + result.error
+    end if
+end sub
+
+sub onItemSelected()
+    index = m.playlistList.itemSelected
+    if index >= 0 and index < m.playlists.count()
+        m.top.playlistSelected = m.playlists[index]
+    end if
+end sub
+]]>
+    </script>
+</component>

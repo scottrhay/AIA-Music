@@ -1,0 +1,31 @@
+@import '../theme/theme.css';
+
+.home-enhanced {
+  min-height: 100vh;
+  background: var(--color-neutral-50);
+}
+
+.home-enhanced__content {
+  padding: var(--spacing-6) 0;
+}
+
+.home-enhanced__container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-6);
+}
+
+@media (max-width: 768px) {
+  .home-enhanced__content {
+    padding: var(--spacing-4) 0;
+  }
+
+  .home-enhanced__container {
+    padding: 0 var(--spacing-4);
+  }
+}
+
+/* Ensure theme CSS variables are loaded */
+:root {
+  font-family: var(--font-family-base);
+}

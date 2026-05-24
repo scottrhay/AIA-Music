@@ -1,0 +1,364 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getSongs, getSongStats, deleteSong, checkAllSubmitted } from '../services/songs';
+import { getStyles } from '../services/styles';
+import { getPlaylists } from '../services/playlists';
+import TopBar from '../components/Studio/TopBar';
+import StudioStats from '../components/Studio/StudioStats';
+import ControlBarPremium from '../components/Studio/ControlBarPremium';
+import TrackGrid from '../components/Studio/TrackGrid';
+import TrackCard from '../components/Studio/TrackCard';
+import SongModal from '../components/SongModal';
+import SongViewModal from '../components/SongViewModal';
+import AssignToPlaylistModal from '../components/AssignToPlaylistModal';
+import '../theme/theme.css';
+import './HomePremium.css';
+
+function HomePremium({ onLogout }) {
+  const navigate = useNavigate();
+  const [songs, setSongs] = useState([]);
+  const [styles, setStyles] = useState([]);
+  const [playlists, setPlaylists] = useState([]);
+  const [stats, setStats] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewingSong, setViewingSong] = useState(null);
+  const [editingSong, setEditingSong] = useState(null);
+  const [playingSongId, setPlayingSongId] = useState(null);
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false);
+  const [playlistSong, setPlaylistSong] = useState(null);
+  const [filters, setFilters] = useState({
+    status: 'all',
+    style_id: '',
+    playlist_id: '',
+    vocal_gender: 'all',
+    search: '',
+    all_users: false,
+    min_stars: 0,
+  });
+  const [lastCheckedAt, setLastCheckedAt] = useState(null);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      // Songs gate the skeleton — load first so UI unblocks ASAP
+      const songsData = await getSongs(filters);
+      setSongs(songsData.songs);
+      setLoading(false);
+
+      // Load supporting data in background (non-blocking)
+      Promise.all([
+        getStyles(),
+        getPlaylists(),
+        getSongStats(filters.all_users),
+      ]).then(([stylesData, playlistsData, statsData]) => {
+        setStyles(stylesData.styles);
+        setPlaylists(playlistsData.playlists || []);
+        setStats(statsData);
+      }).catch(err => {
+        console.error('Error loading supporting data:', err);
+      });
+    } catch (error) {
+      console.error('Error loading songs:', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
+
+  // Track polling state with refs to avoid re-render loops
+  const pollCheckCount = React.useRef(0);
+  const pollingRef = React.useRef(false);
+  const MAX_POLL_CHECKS = 60; // Stop after 60 checks (10 minutes at 10 second intervals)
+
+  // Check if we have submitted songs (computed, not state)
+  const hasSubmittedSongs = useMemo(() =>
+    songs.some(song => song.status === 'submitted'),
+    [songs]
+  );
+
+  // Auto-refresh when there are songs in submitted status
+  useEffect(() => {
+    // If no submitted songs, reset and don't poll
+    if (!hasSubmittedSongs) {
+      pollCheckCount.current = 0;
+      pollingRef.current = false;
+      return;
+    }
+
+    // Already polling or max checks reached
+    if (pollingRef.current || pollCheckCount.current >= MAX_POLL_CHECKS) {
+      return;
+    }
+
+    pollingRef.current = true;
+
+    const intervalId = setInterval(async () => {
+      pollCheckCount.current += 1;
+      console.log(`Status check ${pollCheckCount.current}/${MAX_POLL_CHECKS}`);
+
+      try {
+        const result = await checkAllSubmitted();
+        setLastCheckedAt(Date.now());
+
+        if (result.results && result.results.length > 0) {
+          const anyCompleted = result.results.some(r => r.status === 'completed');
+          if (anyCompleted) {
+            // A song just finished — do a full reload so siblings created by the
+            // webhook also appear (they're never in the submitted-songs list).
+            clearInterval(intervalId);
+            pollingRef.current = false;
+            loadData();
+          } else {
+            setSongs(prevSongs => {
+              let hasChanges = false;
+              const updatedSongs = prevSongs.map(song => {
+                const statusResult = result.results.find(r => r.song_id === song.id);
+                if (statusResult && statusResult.song) {
+                  hasChanges = true;
+                  return { ...song, ...statusResult.song };
+                }
+                return song;
+              });
+              if (!hasChanges) return prevSongs;
+              return updatedSongs;
+            });
+          }
+        } else if (result.total_checked === 0) {
+          // No submitted songs in DB — completed via webhook while we were polling.
+          // React state is stale. Do a full reload to show completed songs.
+          clearInterval(intervalId);
+          pollingRef.current = false;
+          loadData();
+        }
+
+        if (pollCheckCount.current >= MAX_POLL_CHECKS) {
+          console.log('Max poll checks reached');
+          clearInterval(intervalId);
+          pollingRef.current = false;
+        }
+      } catch (error) {
+        console.error('Error checking song status:', error);
+      }
+    }, 10000);
+
+    return () => {
+      clearInterval(intervalId);
+      pollingRef.current = false;
+    };
+  }, [hasSubmittedSongs]);
+
+  // Client-side filtering for star rating
+  const filteredSongs = useMemo(() => {
+    if (!filters.min_stars || filters.min_stars === 0) {
+      return songs;
+    }
+    return songs.filter(song => (song.star_rating || 0) >= filters.min_stars);
+  }, [songs, filters.min_stars]);
+
+  const handleAddSong = () => {
+    setEditingSong(null);
+    setShowModal(true);
+  };
+
+  const handleViewSong = (song) => {
+    setViewingSong(song);
+    setShowViewModal(true);
+
+    // Set as playing if it has audio
+    if (song.status === 'completed' && (song.download_url_1 || song.download_url_2)) {
+      setPlayingSongId(song.id);
+    }
+  };
+
+  const handleDeleteSong = async (songId) => {
+    if (window.confirm('Are you sure you want to delete this song?')) {
+      try {
+        await deleteSong(songId);
+
+        // If the deleted song was playing, stop playback
+        if (playingSongId === songId) {
+          setPlayingSongId(null);
+        }
+
+        loadData();
+      } catch (error) {
+        console.error('Error deleting song:', error);
+        alert('Failed to delete song');
+      }
+    }
+  };
+
+  const handleSongUpdated = (updatedSong) => {
+    // Update the song in the list
+    setSongs(prevSongs => prevSongs.map(s =>
+      s.id === updatedSong.id ? { ...s, ...updatedSong } : s
+    ));
+    // Also update the viewing song if open
+    if (viewingSong && viewingSong.id === updatedSong.id) {
+      setViewingSong({ ...viewingSong, ...updatedSong });
+    }
+  };
+
+  const handleDuplicateSong = (song) => {
+    // Close view modal if open
+    setShowViewModal(false);
+    setViewingSong(null);
+
+    // Calculate next version number
+    const currentVersion = song.version || 'v1';
+    const versionNumber = parseInt(currentVersion.replace('v', '')) || 1;
+    const nextVersion = `v${versionNumber + 1}`;
+
+    // Create a copy of the song without id, status, timestamps, and URLs
+    const duplicatedSong = {
+      specific_title: song.specific_title,
+      version: nextVersion,
+      specific_lyrics: song.specific_lyrics,
+      prompt_to_generate: song.prompt_to_generate,
+      style_id: song.style?.id || song.style_id,
+      vocal_gender: song.vocal_gender,
+    };
+
+    // Open the modal in "create" mode with the duplicated data
+    setEditingSong(duplicatedSong);
+    setShowModal(true);
+  };
+
+  const handleEditSong = (song) => {
+    // Close view modal if open
+    setShowViewModal(false);
+    setViewingSong(null);
+
+    // Open the modal in "edit" mode with the full song data
+    setEditingSong(song);
+    setShowModal(true);
+  };
+
+  const handleModalClose = (shouldRefresh) => {
+    setShowModal(false);
+    setEditingSong(null);
+    if (shouldRefresh) {
+      loadData();
+    }
+  };
+
+  const handleViewModalClose = () => {
+    setShowViewModal(false);
+    setViewingSong(null);
+    setPlayingSongId(null);
+  };
+
+  const handleFilterChange = (key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      status: 'all',
+      style_id: '',
+      playlist_id: '',
+      vocal_gender: 'all',
+      search: '',
+      all_users: false,
+      min_stars: 0,
+    });
+  };
+
+  const handleAssignPlaylist = (song) => {
+    setPlaylistSong(song);
+    setShowPlaylistModal(true);
+  };
+
+  const handlePlaylistModalClose = (shouldRefresh) => {
+    setShowPlaylistModal(false);
+    setPlaylistSong(null);
+    if (shouldRefresh) {
+      loadData();
+    }
+  };
+
+  const hasActiveFilters = useMemo(() => {
+    return filters.search || filters.style_id || filters.playlist_id || filters.vocal_gender !== 'all' || filters.all_users || filters.min_stars > 0;
+  }, [filters]);
+
+  return (
+    <div className="home-premium">
+      <TopBar
+        onAddSong={handleAddSong}
+        onManageStyles={() => navigate('/styles')}
+        onLogout={onLogout}
+      />
+
+      <main className="home-premium__content">
+        <div className="home-premium__container">
+          {/* Stats positioned with grid */}
+          <div className="home-premium__header">
+            <StudioStats stats={stats} />
+          </div>
+
+          <ControlBarPremium
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            styles={styles}
+            playlists={playlists}
+            onClearFilters={handleClearFilters}
+          />
+
+          <TrackGrid
+            songs={filteredSongs}
+            loading={loading}
+            onAddSong={handleAddSong}
+            hasFilters={hasActiveFilters}
+          >
+            {filteredSongs.map((song) => (
+              <TrackCard
+                key={song.id}
+                song={song}
+                onView={handleViewSong}
+                onDelete={handleDeleteSong}
+                onDuplicate={handleDuplicateSong}
+                onEdit={handleEditSong}
+                onAssignPlaylist={handleAssignPlaylist}
+                isPlaying={playingSongId === song.id}
+                lastCheckedAt={lastCheckedAt}
+              />
+            ))}
+          </TrackGrid>
+        </div>
+      </main>
+
+      {showModal && (
+        <SongModal
+          song={editingSong}
+          styles={styles}
+          songs={songs}
+          onClose={handleModalClose}
+        />
+      )}
+
+      {showViewModal && (
+        <SongViewModal
+          song={viewingSong}
+          onClose={handleViewModalClose}
+          onDuplicate={handleDuplicateSong}
+          onEdit={handleEditSong}
+          onSongUpdated={handleSongUpdated}
+        />
+      )}
+
+      {showPlaylistModal && (
+        <AssignToPlaylistModal
+          song={playlistSong}
+          onClose={handlePlaylistModalClose}
+        />
+      )}
+    </div>
+  );
+}
+
+export default HomePremium;

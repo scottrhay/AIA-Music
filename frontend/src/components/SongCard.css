@@ -1,0 +1,267 @@
+.song-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.song-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.song-card-header {
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.card-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.song-icon {
+  font-size: 1.5rem;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.status-badge.status-create {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.status-badge.status-submitted {
+  background-color: rgba(255, 193, 7, 0.9);
+  color: #333;
+}
+
+.status-badge.status-completed {
+  background-color: rgba(76, 175, 80, 0.9);
+  color: white;
+}
+
+.status-badge.status-failed {
+  background-color: rgba(220, 53, 69, 0.9);
+  color: white;
+}
+
+.status-badge.status-unspecified {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.song-card-body {
+  padding: 1.25rem;
+}
+
+.song-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: #333;
+  cursor: text;
+}
+
+.title-edit-input {
+  width: 100%;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #333;
+  border: 1px solid #667eea;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  outline: none;
+  background: white;
+}
+
+.title-edit-input:focus {
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.song-lyrics {
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  min-height: 3rem;
+}
+
+/* Star Rating Section */
+.song-rating {
+  margin: 0.75rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.song-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.meta-item {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.meta-label {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.meta-value {
+  color: #666;
+}
+
+.song-downloads {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.download-link {
+  padding: 0.4rem 0.8rem;
+  background-color: #667eea;
+  color: white;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.download-link:hover {
+  background-color: #5568d3;
+}
+
+.icon-btn {
+  padding: 0.4rem;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  color: white;
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.icon-duplicate:hover {
+  background: rgba(23, 162, 184, 0.9);
+}
+
+.icon-delete:hover {
+  background: rgba(220, 53, 69, 0.9);
+}
+
+/* Audio Section */
+.song-audio-section {
+  margin: 1rem 0;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  border-radius: 12px;
+  border: 2px solid rgba(102, 126, 234, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* Large Play Button */
+.song-play-button {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  flex: 1;
+}
+
+.song-play-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.song-play-button:active {
+  transform: translateY(0);
+}
+
+.song-play-button.playing {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.play-text {
+  font-size: 1.1rem;
+}
+
+/* Download Link */
+.song-download-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: rgba(102, 126, 234, 0.15);
+  color: #667eea;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.song-download-link:hover {
+  background: #667eea;
+  color: white;
+  transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+  .song-audio-section {
+    flex-direction: column;
+  }
+
+  .song-play-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .song-download-link {
+    width: 100%;
+    justify-content: center;
+  }
+}

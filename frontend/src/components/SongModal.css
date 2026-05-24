@@ -1,0 +1,483 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #999;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.modal-close:hover {
+  color: #333;
+}
+
+.modal-content form {
+  padding: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.modal-footer {
+  padding: 1.5rem;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #667eea;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #5568d3;
+}
+
+.btn-secondary {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #e0e0e0;
+}
+
+.alert {
+  padding: 0.75rem 1.5rem;
+  margin: 0 1.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.alert-error {
+  background-color: #fee;
+  color: #c33;
+  border: 1px solid #fcc;
+}
+
+/* Mode Toggle */
+.mode-toggle-container {
+  padding: 1rem 1.5rem 0;
+}
+
+.mode-toggle {
+  display: flex;
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.mode-toggle__btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mode-toggle__btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.mode-toggle__btn:hover:not(.active) {
+  background: rgba(0, 0, 0, 0.05);
+  color: #333;
+}
+
+.mode-toggle__btn.active {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+}
+
+/* File Drop Zone */
+.file-drop-zone {
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #fafafa;
+}
+
+.file-drop-zone:hover {
+  border-color: #06b6d4;
+  background: #f0feff;
+}
+
+.file-drop-zone.dragging {
+  border-color: #06b6d4;
+  background: #e0f7fa;
+  border-style: solid;
+}
+
+.file-drop-zone.has-file {
+  border-style: solid;
+  border-color: #06b6d4;
+  background: #f0feff;
+  padding: 1rem;
+}
+
+.drop-zone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.drop-zone-icon {
+  width: 48px;
+  height: 48px;
+  color: #999;
+  margin-bottom: 0.5rem;
+}
+
+.file-drop-zone:hover .drop-zone-icon,
+.file-drop-zone.dragging .drop-zone-icon {
+  color: #06b6d4;
+}
+
+.drop-zone-text {
+  font-size: 0.95rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.drop-zone-hint {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+/* File Info (when file selected) */
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-align: left;
+}
+
+.file-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.file-icon svg {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
+
+.file-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  display: block;
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-size {
+  display: block;
+  font-size: 0.8rem;
+  color: #999;
+  margin-top: 2px;
+}
+
+.file-remove {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: #f0f0f0;
+  color: #666;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.file-remove:hover {
+  background: #fee;
+  color: #c33;
+}
+
+/* Upload Progress */
+.upload-progress {
+  margin-top: 0.75rem;
+  background: #f0f0f0;
+  border-radius: 4px;
+  height: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-progress__bar {
+  height: 100%;
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.upload-progress__text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-hint {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-content {
+    max-height: 95vh;
+  }
+
+  .mode-toggle__btn {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .mode-toggle__btn svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* ─── Character counter ──────────────────────────────────────────────────── */
+.form-group__label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.5rem;
+}
+
+.form-group__label-row label {
+  margin-bottom: 0;
+}
+
+.char-counter {
+  font-size: 0.78rem;
+  color: #aaa;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.2s;
+}
+
+.char-counter--warn {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.char-counter--over {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+/* ─── Field-level error state ────────────────────────────────────────────── */
+.input--error {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+}
+
+.input--error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+.input--over-limit {
+  border-color: #f59e0b !important;
+}
+
+.form-group--error label {
+  color: #dc2626;
+}
+
+.form-hint--error {
+  color: #dc2626 !important;
+  font-weight: 500;
+}
+
+/* ─── Toast notification ─────────────────────────────────────────────────── */
+.song-modal-toast {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  background: #1e1b4b;
+  color: #fca5a5;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #ef4444;
+  animation: toast-in 0.2s ease;
+}
+
+.song-modal-toast__icon {
+  flex-shrink: 0;
+  color: #f87171;
+  display: flex;
+}
+
+.song-modal-toast__text {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.song-modal-toast__close {
+  background: none;
+  border: none;
+  color: #fca5a5;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+.song-modal-toast__close:hover {
+  opacity: 1;
+}
+
+@keyframes toast-in {
+  from { transform: translateY(-6px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}

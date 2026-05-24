@@ -1,0 +1,609 @@
+/* AIAMusic - Distinctive Design System
+   A sleek, professional design with midnight slate and electric cyan
+   Modern, tech-forward aesthetic with depth */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* === BRAND COLORS ===
+     Midnight/Cyan theme - sleek, professional, modern
+     Primary: Deep slate - sophisticated and grounded
+     Accent: Electric cyan - energy and tech-forward */
+
+  /* Primary - Midnight Slate palette */
+  --color-primary-50: #f8fafc;
+  --color-primary-100: #f1f5f9;
+  --color-primary-200: #e2e8f0;
+  --color-primary-300: #cbd5e1;
+  --color-primary-400: #94a3b8;
+  --color-primary-500: #64748b;  /* Slate */
+  --color-primary-600: #475569;
+  --color-primary-700: #334155;
+  --color-primary-800: #1e293b;  /* Main midnight */
+  --color-primary-900: #0f172a;
+
+  /* Secondary - Electric Cyan (for accents and highlights) */
+  --color-secondary-50: #ecfeff;
+  --color-secondary-100: #cffafe;
+  --color-secondary-200: #a5f3fc;
+  --color-secondary-300: #67e8f9;
+  --color-secondary-400: #22d3ee;
+  --color-secondary-500: #06b6d4;  /* Electric cyan */
+  --color-secondary-600: #0891b2;
+  --color-secondary-700: #0e7490;
+  --color-secondary-800: #155e75;
+  --color-secondary-900: #164e63;
+
+  /* Accent - Cool Blue (for highlights, stars, premium) */
+  --color-accent-gold: #3b82f6;
+  --color-accent-gold-light: #60a5fa;
+  --color-accent-gold-dark: #2563eb;
+
+  /* Semantic Colors */
+  --color-success: #22c55e;
+  --color-success-light: #dcfce7;
+  --color-warning: #f59e0b;
+  --color-warning-light: #fef3c7;
+  --color-error: #ef4444;
+  --color-error-light: #fee2e2;
+  --color-info: #0ea5e9;
+  --color-info-light: #e0f2fe;
+
+  /* Neutral Palette - Cool slate undertones */
+  --color-white: #ffffff;
+  --color-neutral-25: #fafbfc;
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+
+  /* Dark Mode Surface Colors */
+  --color-surface-dark: #18181b;
+  --color-surface-dark-elevated: #27272a;
+  --color-surface-dark-overlay: rgba(0, 0, 0, 0.6);
+
+  /* === TYPOGRAPHY ===
+     Space Grotesk: Modern geometric sans-serif with personality
+     JetBrains Mono: Clean monospace for technical elements */
+
+  --font-family-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-body: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'SF Mono', 'Monaco', monospace;
+
+  /* Type Scale - Slightly larger for better readability */
+  --font-size-2xs: 0.625rem;   /* 10px */
+  --font-size-xs: 0.75rem;     /* 12px */
+  --font-size-sm: 0.875rem;    /* 14px */
+  --font-size-base: 1rem;      /* 16px */
+  --font-size-lg: 1.125rem;    /* 18px */
+  --font-size-xl: 1.25rem;     /* 20px */
+  --font-size-2xl: 1.5rem;     /* 24px */
+  --font-size-3xl: 2rem;       /* 32px */
+  --font-size-4xl: 2.5rem;     /* 40px */
+  --font-size-5xl: 3rem;       /* 48px */
+  --font-size-6xl: 4rem;       /* 64px */
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-none: 1;
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.375;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+  --line-height-loose: 2;
+
+  --letter-spacing-tighter: -0.05em;
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.025em;
+  --letter-spacing-wider: 0.05em;
+  --letter-spacing-widest: 0.1em;
+
+  /* === SPACING === */
+  --spacing-0: 0;
+  --spacing-px: 1px;
+  --spacing-0-5: 0.125rem;
+  --spacing-1: 0.25rem;
+  --spacing-1-5: 0.375rem;
+  --spacing-2: 0.5rem;
+  --spacing-2-5: 0.625rem;
+  --spacing-3: 0.75rem;
+  --spacing-3-5: 0.875rem;
+  --spacing-4: 1rem;
+  --spacing-5: 1.25rem;
+  --spacing-6: 1.5rem;
+  --spacing-7: 1.75rem;
+  --spacing-8: 2rem;
+  --spacing-9: 2.25rem;
+  --spacing-10: 2.5rem;
+  --spacing-12: 3rem;
+  --spacing-14: 3.5rem;
+  --spacing-16: 4rem;
+  --spacing-20: 5rem;
+  --spacing-24: 6rem;
+  --spacing-32: 8rem;
+
+  /* === BORDER RADIUS === */
+  --radius-none: 0;
+  --radius-sm: 0.25rem;
+  --radius-base: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* === SHADOWS ===
+     Warm-tinted shadows for depth */
+  --shadow-xs: 0 1px 2px rgba(28, 25, 23, 0.04);
+  --shadow-sm: 0 1px 3px rgba(28, 25, 23, 0.08), 0 1px 2px rgba(28, 25, 23, 0.04);
+  --shadow-base: 0 4px 6px -1px rgba(28, 25, 23, 0.08), 0 2px 4px -2px rgba(28, 25, 23, 0.04);
+  --shadow-md: 0 8px 16px -4px rgba(28, 25, 23, 0.1), 0 4px 6px -2px rgba(28, 25, 23, 0.05);
+  --shadow-lg: 0 16px 32px -8px rgba(28, 25, 23, 0.12), 0 8px 16px -4px rgba(28, 25, 23, 0.06);
+  --shadow-xl: 0 24px 48px -12px rgba(28, 25, 23, 0.18);
+  --shadow-2xl: 0 32px 64px -16px rgba(28, 25, 23, 0.25);
+  --shadow-inner: inset 0 2px 4px rgba(28, 25, 23, 0.06);
+
+  /* Colored shadows for brand elements */
+  --shadow-primary: 0 8px 24px -4px rgba(6, 182, 212, 0.35);
+  --shadow-primary-lg: 0 16px 40px -8px rgba(6, 182, 212, 0.4);
+  --shadow-secondary: 0 8px 24px -4px rgba(34, 211, 238, 0.35);
+
+  /* === TRANSITIONS ===
+     Smooth, slightly bouncy for playful feel */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slower: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-spring: 600ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  /* === Z-INDEX SCALE === */
+  --z-base: 0;
+  --z-docked: 10;
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-banner: 1200;
+  --z-overlay: 1300;
+  --z-modal: 1400;
+  --z-popover: 1500;
+  --z-skipLink: 1600;
+  --z-toast: 1700;
+  --z-tooltip: 1800;
+
+  /* === GRADIENTS ===
+     Distinctive gradients that define the brand */
+  --gradient-brand: linear-gradient(135deg, var(--color-secondary-500) 0%, var(--color-secondary-600) 50%, #0891b2 100%);
+  --gradient-brand-vibrant: linear-gradient(135deg, #22d3ee 0%, var(--color-secondary-500) 50%, #0e7490 100%);
+  --gradient-sunset: linear-gradient(135deg, var(--color-secondary-400) 0%, var(--color-secondary-500) 35%, var(--color-primary-800) 100%);
+  --gradient-dark: linear-gradient(180deg, var(--color-primary-900) 0%, #020617 100%);
+  --gradient-mesh: radial-gradient(at 40% 20%, var(--color-secondary-500) 0px, transparent 50%),
+                   radial-gradient(at 80% 0%, var(--color-secondary-400) 0px, transparent 50%),
+                   radial-gradient(at 0% 50%, var(--color-primary-700) 0px, transparent 50%);
+
+  /* Glass effect */
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-bg-dark: rgba(24, 24, 27, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-blur: blur(12px);
+}
+
+/* === BASE STYLES === */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: var(--color-neutral-900);
+  background: var(--color-neutral-50);
+  margin: 0;
+  padding: 0;
+}
+
+/* === FOCUS STATES === */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* === SELECTION === */
+::selection {
+  background: var(--color-primary-200);
+  color: var(--color-primary-900);
+}
+
+/* === SCROLLBAR (Webkit) === */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-neutral-100);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-300);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-neutral-100);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neutral-400);
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-track,
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: var(--color-neutral-800);
+}
+
+.dark ::-webkit-scrollbar-thumb,
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-600);
+  border-color: var(--color-neutral-800);
+}
+
+/* === ANIMATIONS === */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-25%); }
+}
+
+/* Music-specific animations */
+@keyframes soundWave {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+@keyframes vinylSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px var(--color-primary-500); }
+  50% { box-shadow: 0 0 40px var(--color-primary-400), 0 0 60px var(--color-primary-300); }
+}
+
+/* Animation utility classes */
+.animate-fadeIn { animation: fadeIn var(--transition-base) ease-out; }
+.animate-fadeInUp { animation: fadeInUp var(--transition-slow) ease-out; }
+.animate-fadeInDown { animation: fadeInDown var(--transition-slow) ease-out; }
+.animate-scaleIn { animation: scaleIn var(--transition-base) ease-out; }
+.animate-slideInRight { animation: slideInRight var(--transition-slow) ease-out; }
+.animate-pulse { animation: pulse 2s ease-in-out infinite; }
+.animate-shimmer { animation: shimmer 2s linear infinite; }
+.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-spin { animation: spin 1s linear infinite; }
+.animate-bounce { animation: bounce 1s ease-in-out infinite; }
+.animate-glow { animation: glow 2s ease-in-out infinite; }
+
+/* Staggered animation delays */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+/* === UTILITY CLASSES === */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.font-display { font-family: var(--font-family-display); }
+.font-body { font-family: var(--font-family-body); }
+.font-mono { font-family: var(--font-family-mono); }
+
+.font-normal { font-weight: var(--font-weight-normal); }
+.font-medium { font-weight: var(--font-weight-medium); }
+.font-semibold { font-weight: var(--font-weight-semibold); }
+.font-bold { font-weight: var(--font-weight-bold); }
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Glass morphism utility */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-dark {
+  background: var(--glass-bg-dark);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* === ACCESSIBILITY === */
+
+/* Enhanced focus indicators for better visibility */
+*:focus-visible {
+  outline: 3px solid var(--color-secondary-400);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--spacing-3) var(--spacing-6);
+  background: var(--color-secondary-500);
+  color: white;
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-lg);
+  z-index: var(--z-skipLink);
+  transition: top var(--transition-fast);
+}
+
+.skip-link:focus {
+  top: var(--spacing-4);
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-fadeIn,
+  .animate-fadeInUp,
+  .animate-fadeInDown,
+  .animate-scaleIn,
+  .animate-slideInRight,
+  .animate-pulse,
+  .animate-shimmer,
+  .animate-float,
+  .animate-spin,
+  .animate-bounce,
+  .animate-glow {
+    animation: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --color-neutral-200: #c0c0c0;
+    --color-neutral-400: #808080;
+    --color-neutral-600: #404040;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    border-width: 2px;
+    border-color: currentColor;
+  }
+
+  *:focus-visible {
+    outline-width: 3px;
+  }
+}
+
+/* Forced colors mode (Windows high contrast) */
+@media (forced-colors: active) {
+  *:focus-visible {
+    outline: 3px solid CanvasText;
+  }
+
+  button,
+  [role="button"] {
+    border: 2px solid ButtonText;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+    color: black;
+    font-size: 12pt;
+  }
+
+  a {
+    text-decoration: underline;
+  }
+
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 10pt;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Larger touch targets on touch devices */
+  button,
+  [role="button"],
+  input,
+  select,
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Remove hover effects that don't work well on touch */
+  .track-card:hover {
+    transform: none;
+    box-shadow: var(--shadow-md);
+  }
+}
+
+/* Dark mode preference */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}
+
+/* Visible focus ring for all interactive elements */
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--color-secondary-400);
+  outline-offset: 2px;
+}
+
+/* Screen reader only text (enhanced) */
+.visually-hidden:not(:focus):not(:active) {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}

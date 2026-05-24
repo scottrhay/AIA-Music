@@ -1,0 +1,74 @@
+# Git
+.git
+.gitignore
+
+# Local IDE/state
+.vs/
+.vscode/
+.claude/
+
+# Documentation
+docs/
+*.md
+!backend/*.md
+!frontend/*.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Frontend build (will be built in Docker)
+frontend/build/
+frontend/build.tar.gz
+
+# Environment files (will be provided via docker-compose)
+.env
+.env.local
+backend/.env
+frontend/.env
+frontend/.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.sqlite3
+data/
+
+# Deployment
+deploy/
+!deploy/nginx/
+
+# Generated packages and local artifacts
+*.tar.gz
+*.zip
+roku/AIAMusicRoku.zip
+
+# Other
+uploads/
+.coverage
+htmlcov/
