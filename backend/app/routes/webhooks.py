@@ -199,11 +199,6 @@ def suno_callback():
 
     current_app.logger.info(f"Suno callback: Found song {original_song.id} for task_id {task_id}")
 
-    # Idempotency check: prevent duplicate processing if webhook fires multiple times
-    if original_song.status == 'completed':
-        current_app.logger.info(f"Suno callback: Song {original_song.id} already processed (status=completed)")
-        return jsonify({'message': 'Already processed', 'song_id': original_song.id}), 200
-
     # Check status
     status = data.get('status', '').lower()
     msg = data.get('msg', '') or data.get('message', '')
@@ -240,11 +235,28 @@ def suno_callback():
     if not isinstance(audio_data, list):
         audio_data = [audio_data] if audio_data else []
 
+    # Suno only ever returns 2 variations. Cap here so an oversized/spoofed payload
+    # can't inject extra sibling rows or reopen a fully-processed (2-track) song.
+    audio_data = audio_data[:2]
+
     current_app.logger.info(f"Suno callback: Found {len(audio_data)} audio items")
 
     if not is_success or not audio_data:
         current_app.logger.warning(f"Suno callback: No audio data for song {original_song.id}")
         return jsonify({'message': 'Callback received but no audio data found'}), 200
+
+    # Idempotency check: Suno fires this callback multiple times — a partial callback
+    # with track 1 first, then a complete callback with all tracks. Only skip once every
+    # incoming track already has a saved sibling, otherwise we'd drop the 2nd variation.
+    existing_tracks = Song.query.filter_by(
+        sibling_group_id=task_id, status='completed'
+    ).count()
+    if existing_tracks >= len(audio_data):
+        current_app.logger.info(
+            f"Suno callback: Song {original_song.id} already has {existing_tracks} track(s) "
+            f"for {len(audio_data)} incoming — skipping as already processed"
+        )
+        return jsonify({'message': 'Already processed', 'song_id': original_song.id}), 200
 
     try:
         created_songs = []
