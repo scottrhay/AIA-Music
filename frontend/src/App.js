@@ -12,6 +12,17 @@ import InstallPrompt from './components/InstallPrompt';
 import { getToken, removeToken, handleOAuthCallback } from './services/auth';
 import { isMobileDevice } from './services/playbackState';
 
+// Redirects once, then clears the flag so the target route (e.g. "/")
+// becomes reachable again on the next manual navigation. Without this,
+// a persistent redirect flag traps mobile users in the player and blocks
+// them from returning to the Studio to create songs.
+function OneTimeRedirect({ to, onDone }) {
+  useEffect(() => {
+    onDone();
+  }, [onDone]);
+  return <Navigate to={to} replace />;
+}
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -82,7 +93,11 @@ function App() {
           path="/"
           element={
             isAuthenticated ? (
-              mobileRedirect ? <Navigate to="/player" replace /> : <HomePremium onLogout={handleLogout} />
+              mobileRedirect ? (
+                <OneTimeRedirect to="/player" onDone={() => setMobileRedirect(false)} />
+              ) : (
+                <HomePremium onLogout={handleLogout} />
+              )
             ) : (
               <Navigate to="/login" />
             )
