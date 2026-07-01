@@ -235,6 +235,10 @@ def suno_callback():
     if not isinstance(audio_data, list):
         audio_data = [audio_data] if audio_data else []
 
+    # Suno only ever returns 2 variations. Cap here so an oversized/spoofed payload
+    # can't inject extra sibling rows or reopen a fully-processed (2-track) song.
+    audio_data = audio_data[:2]
+
     current_app.logger.info(f"Suno callback: Found {len(audio_data)} audio items")
 
     if not is_success or not audio_data:
