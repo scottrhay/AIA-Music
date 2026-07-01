@@ -7,6 +7,9 @@ __pycache__/
 .env
 .env.local
 
+# Local dev config (CI rejects *.local.yml — keep out of version control)
+docker-compose.local.yml
+
 # Build artifacts
 frontend/build/
 *.tar.gz
