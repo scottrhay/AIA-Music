@@ -207,8 +207,13 @@ class Playlist(db.Model):
     songs = db.relationship('Song', secondary=playlist_songs, lazy='dynamic',
                            backref=db.backref('playlists', lazy='dynamic'))
 
-    def to_dict(self, include_songs=False):
-        """Convert playlist to dictionary."""
+    def to_dict(self, include_songs=False, song_count=None):
+        """Convert playlist to dictionary.
+
+        Pass song_count when listing many playlists at once (see
+        playlists.py's get_playlists) to avoid a per-playlist COUNT query —
+        falls back to counting here for single-playlist call sites.
+        """
         data = {
             'id': self.id,
             'name': self.name,
@@ -216,7 +221,7 @@ class Playlist(db.Model):
             'created_by': self.creator.username if self.creator else None,
             'created_by_id': self.created_by,
             'is_public': self.is_public,
-            'song_count': self.songs.count(),
+            'song_count': self.songs.count() if song_count is None else song_count,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }

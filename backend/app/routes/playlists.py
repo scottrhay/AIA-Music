@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
-from app.models import Playlist, Song
+from app.models import Playlist, Song, playlist_songs
 
 bp = Blueprint('playlists', __name__)
 
@@ -20,8 +20,15 @@ def get_playlists():
         )
     ).order_by(Playlist.name).all()
 
+    # One aggregate query for all song counts instead of a COUNT per playlist.
+    counts = dict(
+        db.session.query(playlist_songs.c.playlist_id, db.func.count(playlist_songs.c.song_id))
+        .group_by(playlist_songs.c.playlist_id)
+        .all()
+    )
+
     return jsonify({
-        'playlists': [p.to_dict() for p in playlists],
+        'playlists': [p.to_dict(song_count=counts.get(p.id, 0)) for p in playlists],
         'total': len(playlists)
     }), 200
 
