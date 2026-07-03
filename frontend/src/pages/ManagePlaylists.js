@@ -21,6 +21,7 @@ function ManagePlaylists({ onLogout }) {
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingPlaylist, setEditingPlaylist] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadPlaylists();
@@ -124,8 +125,11 @@ function ManagePlaylists({ onLogout }) {
     Number(selectedPlaylistDetail.created_by_id) === Number(currentUserId);
 
   // Separate playlists into user's own and others'
-  const myPlaylists = playlists.filter(p => p.created_by_id === currentUserId);
-  const otherPlaylists = playlists.filter(p => p.created_by_id !== currentUserId);
+  const matchesSearch = (playlist) =>
+    !searchTerm || playlist.name.toLowerCase().includes(searchTerm.toLowerCase());
+
+  const myPlaylists = playlists.filter(p => p.created_by_id === currentUserId).filter(matchesSearch);
+  const otherPlaylists = playlists.filter(p => p.created_by_id !== currentUserId).filter(matchesSearch);
 
   return (
     <div className="manage-styles">
@@ -154,6 +158,16 @@ function ManagePlaylists({ onLogout }) {
           Create and manage your playlists. Add songs to playlists from the song cards in the studio.
           You can also view other users' public playlists.
         </p>
+
+        <input
+          type="text"
+          className="form-input"
+          placeholder="Search playlists..."
+          aria-label="Search playlists"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ marginBottom: 'var(--spacing-4)', maxWidth: '320px' }}
+        />
 
         {error && (
           <div className="alert alert-error" style={{ marginBottom: 'var(--spacing-4)' }}>

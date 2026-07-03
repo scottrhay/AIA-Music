@@ -25,6 +25,7 @@ function ManageStyles({ onLogout }) {
   const [deleteInfo, setDeleteInfo] = useState({ style: null, songsCount: 0 });
   const [reassignTo, setReassignTo] = useState(0);
   const [deleting, setDeleting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadStyles();
@@ -189,6 +190,16 @@ function ManageStyles({ onLogout }) {
           Create and manage music styles for your songs. Each style defines the genre, mood, and musical characteristics that Suno will use when generating music.
         </p>
 
+        <input
+          type="text"
+          className="form-input"
+          placeholder="Search styles..."
+          aria-label="Search styles"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ marginBottom: 'var(--spacing-4)', maxWidth: '320px' }}
+        />
+
         {error && <div className="alert alert-error">{error}</div>}
 
         <div className="styles-layout">
@@ -198,7 +209,7 @@ function ManageStyles({ onLogout }) {
               <div className="loading">Loading...</div>
             ) : (
               <div className="styles-list">
-                {styles.map((style) => (
+                {styles.filter(s => !searchTerm || s.name.toLowerCase().includes(searchTerm.toLowerCase())).map((style) => (
                   <div
                     key={style.id}
                     className={`style-item ${selectedStyle?.id === style.id ? 'active' : ''}`}
