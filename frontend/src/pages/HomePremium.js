@@ -150,6 +150,7 @@ function HomePremium({ onLogout }) {
       clearInterval(intervalId);
       pollingRef.current = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadData excluded to avoid re-arming the poll interval every render
   }, [hasSubmittedSongs]);
 
   // Client-side filtering for star rating

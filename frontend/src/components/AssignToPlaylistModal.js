@@ -14,6 +14,7 @@ function AssignToPlaylistModal({ song, onClose }) {
 
   useEffect(() => {
     loadPlaylists();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload only when the target song changes
   }, [song.id]);
 
   const loadPlaylists = async () => {

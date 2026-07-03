@@ -28,6 +28,7 @@ function ManageStyles({ onLogout }) {
 
   useEffect(() => {
     loadStyles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only load
   }, []);
 
   const loadStyles = async () => {

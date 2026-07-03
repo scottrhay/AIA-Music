@@ -45,25 +45,6 @@ function SongCard({ song, onView, onDelete, onDuplicate, onUpdateTitle, onRating
   const handleCanPlay = () => {
     setIsBuffering(false);
   };
-  const getStatusClass = (status) => {
-    switch (status) {
-      case 'create':
-        return 'status-create';
-      case 'submitted':
-        return 'status-submitted';
-      case 'completed':
-        return 'status-completed';
-      case 'failed':
-        return 'status-failed';
-      default:
-        return 'status-unspecified';
-    }
-  };
-
-  const getStatusLabel = (status) => {
-    return status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unspecified';
-  };
-
   const truncateText = (text, maxLength = 150) => {
     if (!text) return 'No lyrics provided';
     if (text.length <= maxLength) return text;

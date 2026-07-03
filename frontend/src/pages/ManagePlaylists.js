@@ -24,6 +24,7 @@ function ManagePlaylists({ onLogout }) {
 
   useEffect(() => {
     loadPlaylists();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional mount-only load
   }, []);
 
   useEffect(() => {

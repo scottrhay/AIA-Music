@@ -186,7 +186,6 @@ function SongModal({ song, styles: propStyles, songs, onClose }) {
   const isUploadedSong = song && song.source_type === 'uploaded';
 
   const lyricsLen  = formData.specific_lyrics.length;
-  const promptLen  = formData.prompt_to_generate.length;
   const lyricsOver = lyricsLen > LYRICS_MAX;
 
   return (

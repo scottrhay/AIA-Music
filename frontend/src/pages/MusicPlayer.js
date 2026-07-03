@@ -105,6 +105,7 @@ function MusicPlayer({ onLogout, autoResume = false }) {
         setSelectedPlaylistId(String(playlists[0].id));
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- restorePlaybackState guarded by hasRestoredState ref, not memoized
   }, [loading, playlists]);
 
   const restorePlaybackState = async () => {
@@ -148,6 +149,7 @@ function MusicPlayer({ onLogout, autoResume = false }) {
       loadPlaylistDetail(selectedPlaylistId);
     }
     manualPlaylistLoad.current = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadPlaylistDetail not memoized; would refetch every render if included
   }, [selectedPlaylistId]);
 
   // Apply pending state after playlist loads
@@ -222,6 +224,7 @@ function MusicPlayer({ onLogout, autoResume = false }) {
         }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- isPlaying intentionally excluded: this effect loads track src on song/track change, not on play/pause toggle
   }, [currentSongIndex, currentTrack, currentPlaylist, isRestoring, trace]);
 
   const loadPlaylists = async () => {
@@ -252,8 +255,6 @@ function MusicPlayer({ onLogout, autoResume = false }) {
   };
 
   const currentSong = currentPlaylist?.songs?.[currentSongIndex];
-  const hasTrack1 = currentSong?.archived_url_1 || currentSong?.download_url_1;
-  const hasTrack2 = currentSong?.archived_url_2 || currentSong?.download_url_2;
 
   // Media Session API — enables lock screen controls and background playback on iOS/Android
   useEffect(() => {
@@ -319,12 +320,6 @@ function MusicPlayer({ onLogout, autoResume = false }) {
     setCurrentSongIndex(index);
     setCurrentTrack(1);
     setIsPlaying(true);
-  };
-
-  const handleTrackToggle = (trackNum) => {
-    if ((trackNum === 1 && hasTrack1) || (trackNum === 2 && hasTrack2)) {
-      setCurrentTrack(trackNum);
-    }
   };
 
   const handleTimeUpdate = () => {
