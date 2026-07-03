@@ -3,6 +3,7 @@
     <interface>
         <field id="apiBaseUrl" type="string" />
         <field id="authToken" type="string" />
+        <function name="onScreensaverExit" />
     </interface>
 
     <children>
@@ -69,6 +70,17 @@
             m.audioPlayer.callFunc("loadAndPlay")
         end sub
         
+        function onScreensaverExit() as void
+            ' Restore remote-control focus to whichever child is active —
+            ' without this, key events stop reaching the app after the
+            ' screensaver dismisses until the channel is restarted.
+            if m.audioPlayer.visible
+                m.audioPlayer.setFocus(true)
+            else
+                m.playlistSelector.setFocus(true)
+            end if
+        end function
+
         sub onBackFromPlayer()
             ' User pressed back in player, return to playlist selector
             print ">>> Back from player"

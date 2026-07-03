@@ -24,6 +24,11 @@ sub Main()
         if msgType = "roSGScreenEvent"
             if msg.isScreenClosed()
                 return
+            else if msg.isScreensaverExiting()
+                ' Remote-control focus is lost after the screensaver dismisses
+                ' unless explicitly restored — audio keeps playing through the
+                ' screensaver by design (same as other Roku audio channels).
+                scene.callFunc("onScreensaverExit")
             end if
         end if
     end while
