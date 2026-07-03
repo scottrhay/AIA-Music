@@ -5,6 +5,7 @@ from sqlalchemy.orm import joinedload
 from app import db
 from app.models import Song, Style, Playlist, playlist_songs
 from app.services.audio_storage import get_storage_service
+from app.services.suno_status import classify_suno_status
 import requests
 import os
 import hmac
@@ -476,9 +477,10 @@ def _check_suno_status(song):
             raise Exception(f'Suno API error: {error_msg}')
 
         data = result.get('data', {})
-        status = data.get('status', '').upper()
+        status = data.get('status', '')
+        classification = classify_suno_status(status)
 
-        if status == 'SUCCESS':
+        if classification == 'success':
             # Extract audio URLs from sunoData
             response_data = data.get('response', {})
             suno_data = response_data.get('sunoData', [])
@@ -552,15 +554,17 @@ def _check_suno_status(song):
                 current_app.logger.warning(f"Song {song.id} marked SUCCESS but no audio URLs found")
                 return {'status': 'pending', 'message': 'Waiting for audio URLs'}
 
-        elif status == 'FAILED':
-            error_msg = data.get('errorMessage', 'Generation failed')
+        elif classification == 'failed':
+            # Covers Suno's real error codes (SENSITIVE_WORD_ERROR,
+            # CREATE_TASK_FAILED, GENERATE_AUDIO_FAILED, CALLBACK_EXCEPTION,
+            # etc.) as well as any unrecognized non-success/non-pending
+            # status — these used to fall through to 'pending' and leave
+            # the song stuck until the reconcile job's hard timeout.
+            error_msg = data.get('errorMessage') or f'Suno generation failed ({status})'
             song.status = 'failed'
             db.session.commit()
             current_app.logger.error(f"Song {song.id} failed: {error_msg}")
             return {'status': 'failed', 'error': error_msg}
-
-        elif status in ['PENDING', 'PROCESSING', 'QUEUED']:
-            return {'status': 'pending', 'suno_status': status}
 
         else:
             return {'status': 'pending', 'suno_status': status or 'unknown'}

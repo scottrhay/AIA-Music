@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app
 from app import db
 from app.models import Song
+from app.services.suno_status import classify_suno_status
 import json
 
 bp = Blueprint('webhooks', __name__)
@@ -84,7 +85,8 @@ def azure_speech_callback():
             }), 200
         except Exception as e:
             db.session.rollback()
-            return jsonify({'error': str(e)}), 500
+            current_app.logger.error(f"Webhook database error: {str(e)}", exc_info=True)
+            return jsonify({'error': 'Failed to update song'}), 500
 
     # Extract audio data (handle multiple possible structures)
     audio_data = data.get('data', [])
@@ -143,8 +145,8 @@ def azure_speech_callback():
             }), 200
         except Exception as e:
             db.session.rollback()
-            current_app.logger.error(f"Azure Speech callback: Database error: {str(e)}")
-            return jsonify({'error': str(e)}), 500
+            current_app.logger.error(f"Azure Speech callback: Database error: {str(e)}", exc_info=True)
+            return jsonify({'error': 'Failed to update song'}), 500
     else:
         # Log but still return 200 to acknowledge receipt
         current_app.logger.warning(f"Azure Speech callback: Unexpected payload for song {song.id}: is_success={is_success}, audio_data_len={len(audio_data)}")
@@ -199,26 +201,25 @@ def suno_callback():
 
     current_app.logger.info(f"Suno callback: Found song {original_song.id} for task_id {task_id}")
 
-    # Check status
-    status = data.get('status', '').lower()
+    # Check status — anything Suno doesn't report as success or a known
+    # in-progress state (e.g. SENSITIVE_WORD_ERROR, CREATE_TASK_FAILED) is
+    # treated as a terminal failure so the song doesn't sit stuck in
+    # 'submitted' until the reconcile job's timeout.
+    status = data.get('status', '')
     msg = data.get('msg', '') or data.get('message', '')
+    classification = classify_suno_status(status, msg)
+    is_success = classification == 'success'
 
-    is_success = (
-        status in ['completed', 'success', 'done'] or
-        'successfully' in msg.lower() or
-        'complete' in msg.lower()
-    )
-
-    # Handle failure
-    if status in ['failed', 'error', 'failure']:
+    if classification == 'failed':
         original_song.status = 'failed'
-        current_app.logger.error(f"Suno callback: Song {original_song.id} generation failed: {msg}")
+        current_app.logger.error(f"Suno callback: Song {original_song.id} generation failed ({status}): {msg}")
         try:
             db.session.commit()
-            return jsonify({'message': 'Song marked as failed', 'error': msg}), 200
+            return jsonify({'message': 'Song marked as failed', 'error': msg or status}), 200
         except Exception as e:
             db.session.rollback()
-            return jsonify({'error': str(e)}), 500
+            current_app.logger.error(f"Suno callback: Database error: {str(e)}", exc_info=True)
+            return jsonify({'error': 'Failed to update song'}), 500
 
     # Extract audio data
     audio_data = data.get('data', [])
@@ -331,8 +332,8 @@ def suno_callback():
 
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"Suno callback: Database error: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        current_app.logger.error(f"Suno callback: Database error: {str(e)}", exc_info=True)
+        return jsonify({'error': 'Failed to update song'}), 500
 
 
 @bp.route('/test', methods=['GET', 'POST'])
