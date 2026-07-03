@@ -7,6 +7,7 @@ from app.models import Song, Style, Playlist, playlist_songs
 from app.services.audio_storage import get_storage_service
 import requests
 import os
+import hmac
 
 bp = Blueprint('songs', __name__)
 
@@ -664,8 +665,8 @@ RECONCILE_MIN_AGE_MINUTES = 3
 RECONCILE_TIMEOUT_MINUTES = 30
 
 
-@bp.route('/reconcile/<secret_key>', methods=['POST'])
-def reconcile_stuck_songs(secret_key):
+@bp.route('/reconcile', methods=['POST'])
+def reconcile_stuck_songs():
     """Server-side sweep for songs stuck in 'submitted' with no client polling.
 
     Intended to be hit by a cron job (no user session), not the frontend.
@@ -673,7 +674,8 @@ def reconcile_stuck_songs(secret_key):
     a hard timeout so songs can't spin forever if Suno never resolves them.
     """
     expected = os.getenv('ROKU_SECRET_KEY', '')
-    if not expected or secret_key != expected:
+    provided = request.headers.get('X-Reconcile-Key', '')
+    if not expected or not hmac.compare_digest(expected, provided):
         abort(403)
 
     cutoff = datetime.utcnow() - timedelta(minutes=RECONCILE_MIN_AGE_MINUTES)
