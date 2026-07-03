@@ -2,6 +2,7 @@
 # ========================================
 
 import os
+import tempfile
 import pytest
 
 # Set test environment before imports
@@ -9,6 +10,11 @@ os.environ["FLASK_ENV"] = "testing"
 os.environ["SECRET_KEY"] = "test-secret-key"
 os.environ["JWT_SECRET_KEY"] = "test-jwt-secret"
 os.environ["SIGNUP_ACCESS_CODE"] = os.getenv("SIGNUP_ACCESS_CODE", "test-signup-code")
+# audio_storage.py defaults to /app/data/audio, which doesn't exist (and
+# isn't creatable) outside the production container — point it at a temp
+# dir so route tests that touch storage (e.g. delete_song) don't fail on
+# a filesystem permission error unrelated to the code under test.
+os.environ["AUDIO_STORAGE_PATH"] = os.getenv("AUDIO_STORAGE_PATH", os.path.join(tempfile.gettempdir(), "aiamusic_test_audio"))
 os.environ["DB_HOST"] = os.getenv("DB_HOST", "localhost")
 os.environ["DB_PORT"] = os.getenv("DB_PORT", "5432")
 os.environ["DB_NAME"] = os.getenv("DB_NAME", "testdb")
