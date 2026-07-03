@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { handleOAuthCallback } from '../services/auth';
+import { exchangeLoginCode } from '../services/auth';
 import './Login.css';
 
 const API_URL = process.env.REACT_APP_API_URL || '/api/v1';
@@ -12,14 +12,15 @@ function Login({ onLogin }) {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
+    const loginCode = urlParams.get('login_code');
     const oauthError = urlParams.get('error');
     const errorMessage = urlParams.get('message');
 
-    if (token) {
-      handleOAuthCallback(token, urlParams.get('user_id'), urlParams.get('username'));
-      window.history.replaceState({}, document.title, window.location.pathname);
-      onLogin();
+    if (loginCode) {
+      exchangeLoginCode(loginCode)
+        .then(() => onLogin())
+        .catch(() => setError('Authentication failed. Please try again.'))
+        .finally(() => window.history.replaceState({}, document.title, window.location.pathname));
     } else if (oauthError) {
       setError(errorMessage || 'Authentication failed. Please try again.');
       window.history.replaceState({}, document.title, window.location.pathname);

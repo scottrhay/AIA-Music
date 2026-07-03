@@ -45,3 +45,16 @@ export const handleOAuthCallback = (token, userId, username) => {
     username: username
   }));
 };
+
+export const exchangeLoginCode = async (code) => {
+  // Exchanges a short-lived OAuth login code for the real JWT — the code
+  // travels in the redirect URL instead of the token itself, so a stray
+  // access log or Referer header can't leak a usable session.
+  const response = await api.post('/auth/exchange-code', { code });
+  const { access_token, user } = response.data;
+
+  localStorage.setItem(TOKEN_KEY, access_token);
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
+
+  return { token: access_token, user };
+};

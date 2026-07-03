@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify, redirect, current_app
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from datetime import datetime, timedelta
 from app import db, bcrypt
-from app.models import User
+from app.models import User, OAuthLoginCode
 import os
 import requests
 from urllib.parse import urlencode
@@ -15,7 +16,12 @@ MICROSOFT_CLIENT_SECRET = os.getenv('MICROSOFT_CLIENT_SECRET')
 MICROSOFT_TENANT_ID = os.getenv('MICROSOFT_TENANT_ID', 'common')  # 'common' allows both personal and work/school accounts
 MICROSOFT_REDIRECT_URI = os.getenv('MICROSOFT_REDIRECT_URI', 'https://music.aiacopilot.com/api/v1/auth/microsoft/callback')
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://music.aiacopilot.com')
-SIGNUP_ACCESS_CODE = os.getenv('SIGNUP_ACCESS_CODE', '49676')
+SIGNUP_ACCESS_CODE = os.getenv('SIGNUP_ACCESS_CODE')
+
+if not SIGNUP_ACCESS_CODE:
+    raise RuntimeError('SIGNUP_ACCESS_CODE environment variable is not set')
+
+LOGIN_CODE_TTL_MINUTES = 2
 
 
 @bp.route('/register', methods=['POST'])
@@ -51,7 +57,8 @@ def register():
         }), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        current_app.logger.error(f"Error registering user: {str(e)}", exc_info=True)
+        return jsonify({'error': 'Failed to create account'}), 500
 
 
 @bp.route('/login', methods=['POST'])
@@ -80,6 +87,35 @@ def login():
     }), 200
 
 
+@bp.route('/exchange-code', methods=['POST'])
+def exchange_code():
+    """Exchange a short-lived OAuth login code for a real JWT."""
+    data = request.get_json() or {}
+    code = data.get('code')
+
+    if not code:
+        return jsonify({'error': 'Code is required'}), 400
+
+    login_code = OAuthLoginCode.query.get(code)
+
+    if not login_code or login_code.used or login_code.expires_at < datetime.utcnow():
+        return jsonify({'error': 'Invalid or expired code'}), 401
+
+    login_code.used = True
+    db.session.commit()
+
+    user = User.query.get(login_code.user_id)
+    if not user or not user.is_active:
+        return jsonify({'error': 'Account is not available'}), 403
+
+    access_token = create_access_token(identity=user.id)
+
+    return jsonify({
+        'access_token': access_token,
+        'user': user.to_dict()
+    }), 200
+
+
 @bp.route('/me', methods=['GET'])
 @jwt_required()
 def get_current_user():
@@ -96,10 +132,14 @@ def get_current_user():
 @bp.route('/users', methods=['GET'])
 @jwt_required()
 def get_users():
-    """Get all users (for admin or team view)."""
+    """Get active users for the song-owner-reassignment picker.
+
+    Returns only id/username (not email) — any authenticated team member
+    can see this list, but there's no reason to expose everyone's email.
+    """
     users = User.query.filter_by(is_active=True).all()
     return jsonify({
-        'users': [user.to_dict() for user in users]
+        'users': [{'id': u.id, 'username': u.username} for u in users]
     }), 200
 
 
@@ -201,12 +241,20 @@ def microsoft_callback():
         if not user.is_active:
             return redirect(f'{FRONTEND_URL}?error=account_deactivated')
 
-        # Create JWT token
-        jwt_token = create_access_token(identity=user.id)
-        current_app.logger.info(f"Created JWT for user {user.id} ({user.username}), redirecting to frontend")
+        # Issue a short-lived, single-use code instead of the JWT itself —
+        # putting the real token in the redirect URL would land it in
+        # server access logs and Referer headers. The frontend exchanges
+        # this code for the actual token via POST /auth/exchange-code.
+        login_code = secrets.token_urlsafe(32)
+        db.session.add(OAuthLoginCode(
+            code=login_code,
+            user_id=user.id,
+            expires_at=datetime.utcnow() + timedelta(minutes=LOGIN_CODE_TTL_MINUTES)
+        ))
+        db.session.commit()
+        current_app.logger.info(f"Issued login code for user {user.id} ({user.username}), redirecting to frontend")
 
-        # Redirect to frontend with token
-        return redirect(f'{FRONTEND_URL}?token={jwt_token}&user_id={user.id}&username={user.username}')
+        return redirect(f'{FRONTEND_URL}?login_code={login_code}')
 
     except requests.exceptions.RequestException as e:
         current_app.logger.error(f"Microsoft OAuth request error: {str(e)}")

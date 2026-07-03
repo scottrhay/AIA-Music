@@ -50,6 +50,22 @@ class User(db.Model):
         }
 
 
+class OAuthLoginCode(db.Model):
+    """Short-lived, single-use code exchanged for a JWT after OAuth login.
+
+    Avoids putting the JWT itself in the redirect URL, where it would land
+    in server access logs and Referer headers.
+    """
+
+    __tablename__ = 'oauth_login_codes'
+
+    code = db.Column(db.String(64), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class Style(db.Model):
     """Style model for music style definitions."""
 

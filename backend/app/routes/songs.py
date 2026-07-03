@@ -316,7 +316,8 @@ def create_song():
         }), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        current_app.logger.error(f"Error creating song: {str(e)}", exc_info=True)
+        return jsonify({'error': 'Failed to create song'}), 500
 
 
 @bp.route('/<int:song_id>', methods=['PUT'])
@@ -378,7 +379,8 @@ def update_song(song_id):
         }), 200
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        current_app.logger.error(f"Error updating song {song_id}: {str(e)}", exc_info=True)
+        return jsonify({'error': 'Failed to update song'}), 500
 
 
 @bp.route('/<int:song_id>', methods=['DELETE'])
@@ -405,7 +407,8 @@ def delete_song(song_id):
         return jsonify({'message': 'Song deleted successfully'}), 200
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        current_app.logger.error(f"Error deleting song {song_id}: {str(e)}", exc_info=True)
+        return jsonify({'error': 'Failed to delete song'}), 500
 
 
 @bp.route('/stats', methods=['GET'])
@@ -901,5 +904,5 @@ def upload_song():
 
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"Error uploading song: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        current_app.logger.error(f"Error uploading song: {str(e)}", exc_info=True)
+        return jsonify({'error': 'Failed to upload song'}), 500

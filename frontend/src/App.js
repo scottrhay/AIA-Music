@@ -9,7 +9,7 @@ import ManagePlaylists from './pages/ManagePlaylists';
 import MusicPlayer from './pages/MusicPlayer';
 import SignUp from './pages/SignUp';
 import InstallPrompt from './components/InstallPrompt';
-import { getToken, removeToken, handleOAuthCallback } from './services/auth';
+import { getToken, removeToken, exchangeLoginCode } from './services/auth';
 import { isMobileDevice } from './services/playbackState';
 
 function App() {
@@ -29,18 +29,22 @@ function App() {
 
     // Check for OAuth callback params first
     const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
+    const loginCode = urlParams.get('login_code');
 
-    if (token) {
-      // OAuth callback - store token and mark as authenticated
-      handleOAuthCallback(token, urlParams.get('user_id'), urlParams.get('username'));
-      // Clear URL params
-      window.history.replaceState({}, document.title, window.location.pathname);
-      setIsAuthenticated(true);
-    } else {
-      // Check if user is authenticated on mount
-      setIsAuthenticated(!!getToken());
+    if (loginCode) {
+      // OAuth callback - exchange the one-time code for a real token
+      exchangeLoginCode(loginCode)
+        .then(() => setIsAuthenticated(true))
+        .catch(() => setIsAuthenticated(false))
+        .finally(() => {
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setIsLoading(false);
+        });
+      return;
     }
+
+    // Check if user is authenticated on mount
+    setIsAuthenticated(!!getToken());
     setIsLoading(false);
   }, []);
 
