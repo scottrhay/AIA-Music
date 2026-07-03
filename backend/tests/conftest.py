@@ -8,6 +8,7 @@ import pytest
 os.environ["FLASK_ENV"] = "testing"
 os.environ["SECRET_KEY"] = "test-secret-key"
 os.environ["JWT_SECRET_KEY"] = "test-jwt-secret"
+os.environ["SIGNUP_ACCESS_CODE"] = os.getenv("SIGNUP_ACCESS_CODE", "test-signup-code")
 os.environ["DB_HOST"] = os.getenv("DB_HOST", "localhost")
 os.environ["DB_PORT"] = os.getenv("DB_PORT", "5432")
 os.environ["DB_NAME"] = os.getenv("DB_NAME", "testdb")
@@ -17,21 +18,23 @@ os.environ["DB_PASSWORD"] = os.getenv("DB_PASSWORD", "testpass")
 
 @pytest.fixture
 def app():
-    """Create test Flask application."""
-    # Import here to ensure env vars are set first
-    try:
-        from app import create_app
-        app = create_app("testing")
-        app.config["TESTING"] = True
-        yield app
-    except ImportError:
-        # If create_app doesn't exist, try direct import
-        try:
-            from app import app as flask_app
-            flask_app.config["TESTING"] = True
-            yield flask_app
-        except ImportError:
-            pytest.skip("Could not import Flask app")
+    """Create test Flask application with a real (empty) schema per test.
+
+    TestingConfig (config.py) points at an in-memory SQLite DB, not the
+    Postgres used elsewhere — SQLAlchemy's postgresql ENUM type degrades to
+    a plain VARCHAR+CHECK constraint on non-Postgres dialects, so
+    db.create_all() works here without any Postgres-specific setup.
+    """
+    from app import create_app, db as _db
+
+    flask_app = create_app("testing")
+    flask_app.config["TESTING"] = True
+
+    with flask_app.app_context():
+        _db.create_all()
+        yield flask_app
+        _db.session.remove()
+        _db.drop_all()
 
 
 @pytest.fixture
