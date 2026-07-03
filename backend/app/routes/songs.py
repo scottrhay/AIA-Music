@@ -1,6 +1,6 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy.orm import joinedload
 from app import db
 from app.models import Song, Style, Playlist, playlist_songs
@@ -651,6 +651,73 @@ def check_all_submitted():
         'updated': updated_count,
         'errors': error_count,
         'total_checked': len(submitted_songs)
+    }), 200
+
+
+# A submitted song younger than this is still within normal Suno generation
+# time — skip it to avoid hammering the Suno API on every cron tick.
+RECONCILE_MIN_AGE_MINUTES = 3
+
+# A submitted song older than this has almost certainly lost its webhook
+# and Suno status checks aren't resolving it either — stop the frontend
+# spinner and let the user retry instead of waiting forever.
+RECONCILE_TIMEOUT_MINUTES = 30
+
+
+@bp.route('/reconcile/<secret_key>', methods=['POST'])
+def reconcile_stuck_songs(secret_key):
+    """Server-side sweep for songs stuck in 'submitted' with no client polling.
+
+    Intended to be hit by a cron job (no user session), not the frontend.
+    Mirrors check-submitted's logic but runs across all users and applies
+    a hard timeout so songs can't spin forever if Suno never resolves them.
+    """
+    expected = os.getenv('ROKU_SECRET_KEY', '')
+    if not expected or secret_key != expected:
+        abort(403)
+
+    cutoff = datetime.utcnow() - timedelta(minutes=RECONCILE_MIN_AGE_MINUTES)
+    timeout_cutoff = datetime.utcnow() - timedelta(minutes=RECONCILE_TIMEOUT_MINUTES)
+
+    stuck_songs = Song.query.filter(
+        Song.status == 'submitted',
+        Song.created_at < cutoff
+    ).all()
+
+    checked = 0
+    updated = 0
+    timed_out = 0
+    errors = 0
+
+    for song in stuck_songs:
+        if not song.suno_task_id:
+            continue
+
+        checked += 1
+        try:
+            result = _check_suno_status(song)
+            if result.get('status') == 'completed':
+                updated += 1
+            elif result.get('status') == 'failed':
+                updated += 1
+        except Exception as e:
+            errors += 1
+            current_app.logger.error(f"Reconcile: error checking song {song.id}: {str(e)}")
+
+        # Re-check status after the attempt above; if still stuck and past
+        # the hard timeout, fail it so it stops spinning in the UI.
+        if song.status == 'submitted' and song.created_at < timeout_cutoff:
+            song.status = 'failed'
+            db.session.commit()
+            timed_out += 1
+            current_app.logger.warning(f"Reconcile: song {song.id} timed out after {RECONCILE_TIMEOUT_MINUTES} min, marked failed")
+
+    return jsonify({
+        'candidates': len(stuck_songs),
+        'checked': checked,
+        'updated': updated,
+        'timed_out': timed_out,
+        'errors': errors
     }), 200
 
 
