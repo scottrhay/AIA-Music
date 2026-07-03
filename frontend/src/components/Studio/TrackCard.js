@@ -28,7 +28,7 @@ function getGenerationProgress(startTime) {
   }
 }
 
-function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange, isPlaying, onAssignPlaylist, lastCheckedAt }) {
+function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange, isPlaying, onAssignPlaylist, lastCheckedAt, selectMode, isSelected, onToggleSelect }) {
   const [showMenu, setShowMenu] = useState(false);
   const [rating, setRating] = useState(song.star_rating || 0);
   const [playingTrack, setPlayingTrack] = useState(null);
@@ -171,6 +171,10 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
   const statusInfo = getStatusInfo(song.status);
 
   const handleCardClick = () => {
+    if (selectMode) {
+      onToggleSelect(song.id);
+      return;
+    }
     onView(song);
   };
 
@@ -265,11 +269,21 @@ function TrackCard({ song, onView, onDelete, onDuplicate, onEdit, onRatingChange
 
   return (
     <div
-      className={`track-card ${isPlaying ? 'track-card--playing' : ''}`}
+      className={`track-card ${isPlaying ? 'track-card--playing' : ''} ${isSelected ? 'track-card--selected' : ''}`}
       onClick={handleCardClick}
     >
       {/* Header Row */}
       <div className="track-card__header">
+        {selectMode && (
+          <input
+            type="checkbox"
+            checked={!!isSelected}
+            onChange={() => onToggleSelect(song.id)}
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`Select ${song.specific_title || 'song'}`}
+            className="track-card__select-checkbox"
+          />
+        )}
         <div className="track-card__title-section">
           <h3 className="track-card__title" onClick={handleTitleClick}>
             {isEditingTitle ? (

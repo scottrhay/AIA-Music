@@ -36,6 +36,32 @@
   width: 100%;
 }
 
+.home-premium__bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-4);
+}
+
+.home-premium__bulk-bar .btn-danger {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.home-premium__bulk-bar .btn-danger:hover {
+  background: #dc2626;
+}
+
+.home-premium__bulk-bar .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.home-premium__bulk-count {
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
 /* Header section with stats */
 .home-premium__header {
   margin-bottom: var(--spacing-6);

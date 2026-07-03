@@ -38,6 +38,8 @@ function HomePremium({ onLogout }) {
     min_stars: 0,
   });
   const [lastCheckedAt, setLastCheckedAt] = useState(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const loadData = async () => {
     try {
@@ -283,6 +285,34 @@ function HomePremium({ onLogout }) {
     }
   };
 
+  const handleToggleSelectMode = () => {
+    setSelectMode((prev) => !prev);
+    setSelectedIds([]);
+  };
+
+  const handleToggleSelect = (songId) => {
+    setSelectedIds((prev) =>
+      prev.includes(songId) ? prev.filter((id) => id !== songId) : [...prev, songId]
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!window.confirm(`Delete ${selectedIds.length} selected song(s)? This cannot be undone.`)) {
+      return;
+    }
+    try {
+      await Promise.all(selectedIds.map((id) => deleteSong(id)));
+      setSelectedIds([]);
+      setSelectMode(false);
+      loadData();
+    } catch (error) {
+      console.error('Error deleting songs:', error);
+      alert('Failed to delete one or more songs');
+      loadData();
+    }
+  };
+
   const hasActiveFilters = useMemo(() => {
     return filters.search || filters.style_id || filters.playlist_id || filters.vocal_gender !== 'all' || filters.all_users || filters.min_stars > 0;
   }, [filters]);
@@ -310,6 +340,24 @@ function HomePremium({ onLogout }) {
             onClearFilters={handleClearFilters}
           />
 
+          <div className="home-premium__bulk-bar">
+            <button className="btn btn-secondary" onClick={handleToggleSelectMode}>
+              {selectMode ? 'Cancel' : 'Select'}
+            </button>
+            {selectMode && (
+              <>
+                <span className="home-premium__bulk-count">{selectedIds.length} selected</span>
+                <button
+                  className="btn btn-danger"
+                  onClick={handleBulkDelete}
+                  disabled={selectedIds.length === 0}
+                >
+                  Delete selected
+                </button>
+              </>
+            )}
+          </div>
+
           <TrackGrid
             songs={filteredSongs}
             loading={loading}
@@ -327,6 +375,9 @@ function HomePremium({ onLogout }) {
                 onAssignPlaylist={handleAssignPlaylist}
                 isPlaying={playingSongId === song.id}
                 lastCheckedAt={lastCheckedAt}
+                selectMode={selectMode}
+                isSelected={selectedIds.includes(song.id)}
+                onToggleSelect={handleToggleSelect}
               />
             ))}
           </TrackGrid>
